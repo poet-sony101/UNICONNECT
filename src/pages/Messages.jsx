@@ -1,0 +1,182 @@
+import { useState, useRef, useEffect } from "react";
+import Avatar from "../components/layout/Avatar";
+
+const styles = `
+  @keyframes popUp {
+    0% { opacity: 0; transform: translateY(16px) scale(0.97); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .pop-up {
+    animation: popUp 0.3s ease forwards;
+    opacity: 0;
+  }
+  @keyframes popSend {
+    0% { transform: scale(1); }
+    30% { transform: scale(0.8); }
+    60% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+  .pop-send {
+    animation: popSend 0.3s ease forwards;
+  }
+`;
+
+const DM_LIST = [
+  { id: 1, name: "Chioma Adeyemi", avatar: "CA", lastMsg: "See you in class tomorrow!", time: "10:11 AM", unread: 2 },
+  { id: 2, name: "Tunde Okonkwo", avatar: "TO", lastMsg: "Do you have the CSC101 textbook?", time: "Yesterday", unread: 0 },
+  { id: 3, name: "Amaka Bello", avatar: "AB", lastMsg: "Thanks for the info!", time: "Yesterday", unread: 0 },
+];
+
+function DMConversation({ dm, onBack }) {
+  const [messages, setMessages] = useState([
+    { id: 1, content: dm.lastMsg, mine: false, time: dm.time },
+  ]);
+  const [input, setInput] = useState("");
+  const bottomRef = useRef(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const sendMessage = () => {
+    if (!input.trim()) return;
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: prev.length + 1,
+        content: input,
+        mine: true,
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      },
+    ]);
+    setInput("");
+  };
+
+  return (
+    <div className="flex flex-col h-[calc(100vh-140px)]">
+      <style>{styles}</style>
+
+      {/* Header */}
+      <div
+        className="px-4 py-3.5 flex items-center gap-3"
+        style={{ background: "linear-gradient(135deg, #064e3b, #4c1d95)" }}
+      >
+        <button onClick={onBack} className="text-white/80 text-xl bg-transparent border-none">
+          ‹
+        </button>
+        <Avatar initials={dm.avatar} color="#8b5cf6" size={34} />
+        <div className="font-bold text-sm text-white">{dm.name}</div>
+      </div>
+
+      {/* Messages */}
+      <div
+        className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4 transition-colors duration-300"
+        style={{ backgroundColor: "var(--bg)" }}
+      >
+        {messages.map((msg, index) => (
+          <div
+            key={msg.id}
+            className={`flex pop-up ${msg.mine ? "justify-end" : "justify-start"}`}
+            style={{ animationDelay: `${index * 0.08}s` }}
+          >
+            <div className="max-w-[75%]">
+              <div
+                className={`px-4 py-2.5 text-sm leading-relaxed border transition-colors duration-300 ${
+                  msg.mine
+                    ? "bg-emerald-700 text-white rounded-2xl rounded-br-sm border-transparent"
+                    : "rounded-2xl rounded-bl-sm"
+                }`}
+                style={
+                  !msg.mine
+                    ? { backgroundColor: "var(--card)", borderColor: "var(--border)", color: "var(--text-primary)" }
+                    : {}
+                }
+              >
+                {msg.content}
+              </div>
+              <div
+                className={`text-[10px] mt-1 ${msg.mine ? "text-right" : ""}`}
+                style={{ color: "var(--text-secondary)" }}
+              >
+                {msg.time}
+              </div>
+            </div>
+          </div>
+        ))}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Input */}
+      <div
+        className="px-4 py-3 flex gap-3 items-center border-t transition-colors duration-300"
+        style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
+      >
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+          placeholder={`Message ${dm.name.split(" ")[0]}...`}
+          className="flex-1 rounded-full px-4 py-2.5 text-sm outline-none transition-colors duration-300"
+          style={{ backgroundColor: "var(--bg)", color: "var(--text-primary)" }}
+        />
+        <button
+          id="dm-send-btn"
+          onClick={() => {
+            sendMessage();
+            const el = document.getElementById("dm-send-btn");
+            el.classList.remove("pop-send");
+            void el.offsetWidth;
+            el.classList.add("pop-send");
+          }}
+          className="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center text-lg font-bold"
+        >
+          ↑
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function Messages() {
+  const [activeDM, setActiveDM] = useState(null);
+
+  if (activeDM) return <DMConversation dm={activeDM} onBack={() => setActiveDM(null)} />;
+
+  return (
+    <div className="px-4 py-4 pb-28">
+      <style>{styles}</style>
+      <div className="font-extrabold text-xl mb-5 transition-colors duration-300" style={{ color: "var(--text-primary)" }}>
+        Messages
+      </div>
+
+      <div className="flex flex-col gap-3">
+        {DM_LIST.map((dm, index) => (
+          <div
+            key={dm.id}
+            onClick={() => setActiveDM(dm)}
+            className="pop-up rounded-2xl px-4 py-4 border flex items-center gap-3 cursor-pointer shadow-sm transition-colors duration-300"
+            style={{
+              backgroundColor: "var(--card)",
+              borderColor: "var(--border)",
+              animationDelay: `${index * 0.1}s`,
+            }}
+          >
+            <Avatar initials={dm.avatar} color="#8b5cf6" size={44} />
+            <div className="flex-1">
+              <div className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>{dm.name}</div>
+              <div className="text-xs mt-0.5" style={{ color: "var(--text-secondary)" }}>{dm.lastMsg}</div>
+            </div>
+            <div className="text-right flex flex-col items-end gap-1">
+              <div className="text-xs" style={{ color: "var(--text-secondary)" }}>{dm.time}</div>
+              {dm.unread > 0 && (
+                <div className="w-5 h-5 rounded-full bg-emerald-700 text-white text-xs font-bold flex items-center justify-center">
+                  {dm.unread}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
