@@ -20,11 +20,27 @@ const TAB_TITLES = {
   profile: "My Profile",
 };
 
+const INITIAL_GROUP_MESSAGES = [
+  { id: 1, sender: "Chioma A.", avatar: "CA", content: "Hey everyone! Anyone know when our first lecture is?", time: "10:02 AM", mine: false },
+  { id: 2, sender: "You", avatar: "ME", content: "I heard it's Monday 8am in LT1", time: "10:05 AM", mine: true },
+  { id: 3, sender: "Tunde O.", avatar: "TO", content: "Omo that's early 😩 anybody know the course advisor?", time: "10:07 AM", mine: false },
+  { id: 4, sender: "Amaka B.", avatar: "AB", content: "It's Dr. Fashola, I saw it on the notice board", time: "10:09 AM", mine: false },
+  { id: 5, sender: "You", avatar: "ME", content: "Thanks Amaka! This group is already helpful 🙏", time: "10:11 AM", mine: true },
+];
+
+const INITIAL_DM_LIST = [
+  { id: 1, name: "Chioma Adeyemi", avatar: "CA", lastMsg: "See you in class tomorrow!", time: "10:11 AM", unread: 2 },
+  { id: 2, name: "Tunde Okonkwo", avatar: "TO", lastMsg: "Do you have the CSC101 textbook?", time: "Yesterday", unread: 0 },
+  { id: 3, name: "Amaka Bello", avatar: "AB", lastMsg: "Thanks for the info!", time: "Yesterday", unread: 0 },
+];
+
 function MainApp() {
   const [authed, setAuthed] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
   const [tab, setTab] = useState("feed");
   const { theme, toggleTheme } = useTheme();
+  const [groupMessages, setGroupMessages] = useState(INITIAL_GROUP_MESSAGES);
+  const [dmList, setDmList] = useState(INITIAL_DM_LIST);
 
   if (!authed) return <Auth onComplete={() => setAuthed(true)} />;
   if (!onboarded) return <Onboarding onComplete={() => setOnboarded(true)} />;
@@ -72,8 +88,18 @@ function MainApp() {
         >
           {tab === "feed" && <Feed />}
           {tab === "colleges" && <Faculties />}
-          {tab === "chat" && <GroupChat />}
-          {tab === "dms" && <Messages />}
+          {tab === "chat" && (
+            <GroupChat
+              messages={groupMessages}
+              setMessages={setGroupMessages}
+            />
+          )}
+          {tab === "dms" && (
+            <Messages
+              dmList={dmList}
+              setDmList={setDmList}
+            />
+          )}
           {tab === "profile" && <Profile />}
         </motion.div>
       </AnimatePresence>

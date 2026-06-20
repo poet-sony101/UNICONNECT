@@ -22,16 +22,7 @@ const styles = `
   }
 `;
 
-const INITIAL_MESSAGES = [
-  { id: 1, sender: "Chioma A.", avatar: "CA", content: "Hey everyone! Anyone know when our first lecture is?", time: "10:02 AM", mine: false },
-  { id: 2, sender: "You", avatar: "ME", content: "I heard it's Monday 8am in LT1", time: "10:05 AM", mine: true },
-  { id: 3, sender: "Tunde O.", avatar: "TO", content: "Omo that's early 😩 anybody know the course advisor?", time: "10:07 AM", mine: false },
-  { id: 4, sender: "Amaka B.", avatar: "AB", content: "It's Dr. Fashola, I saw it on the notice board", time: "10:09 AM", mine: false },
-  { id: 5, sender: "You", avatar: "ME", content: "Thanks Amaka! This group is already helpful 🙏", time: "10:11 AM", mine: true },
-];
-
-export default function GroupChat() {
-  const [messages, setMessages] = useState(INITIAL_MESSAGES);
+export default function GroupChat({ messages, setMessages }) {
   const [input, setInput] = useState("");
   const { department } = useUser();
   const bottomRef = useRef(null);

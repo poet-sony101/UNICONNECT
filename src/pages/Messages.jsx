@@ -21,13 +21,7 @@ const styles = `
   }
 `;
 
-const DM_LIST = [
-  { id: 1, name: "Chioma Adeyemi", avatar: "CA", lastMsg: "See you in class tomorrow!", time: "10:11 AM", unread: 2 },
-  { id: 2, name: "Tunde Okonkwo", avatar: "TO", lastMsg: "Do you have the CSC101 textbook?", time: "Yesterday", unread: 0 },
-  { id: 3, name: "Amaka Bello", avatar: "AB", lastMsg: "Thanks for the info!", time: "Yesterday", unread: 0 },
-];
-
-function DMConversation({ dm, onBack }) {
+function DMConversation({ dm, onBack, onUpdateLastMsg }) {
   const [messages, setMessages] = useState([
     { id: 1, content: dm.lastMsg, mine: false, time: dm.time },
   ]);
@@ -40,15 +34,12 @@ function DMConversation({ dm, onBack }) {
 
   const sendMessage = () => {
     if (!input.trim()) return;
+    const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     setMessages((prev) => [
       ...prev,
-      {
-        id: prev.length + 1,
-        content: input,
-        mine: true,
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      },
+      { id: prev.length + 1, content: input, mine: true, time },
     ]);
+    onUpdateLastMsg(dm.id, input, time);
     setInput("");
   };
 
@@ -61,11 +52,14 @@ function DMConversation({ dm, onBack }) {
         className="px-4 py-3.5 flex items-center gap-3"
         style={{ background: "linear-gradient(135deg, #064e3b, #4c1d95)" }}
       >
-        <button onClick={onBack} className="text-white/80 text-xl bg-transparent border-none">
+        <button onClick={onBack} className="text-white/80 text-xl bg-transparent border-none cursor-pointer">
           ‹
         </button>
         <Avatar initials={dm.avatar} color="#8b5cf6" size={34} />
-        <div className="font-bold text-sm text-white">{dm.name}</div>
+        <div>
+          <div className="font-bold text-sm text-white">{dm.name}</div>
+          <div className="text-xs text-white/60">UNILAG · 100L</div>
+        </div>
       </div>
 
       {/* Messages */}
@@ -137,10 +131,31 @@ function DMConversation({ dm, onBack }) {
   );
 }
 
-export default function Messages() {
+export default function Messages({ dmList, setDmList }) {
   const [activeDM, setActiveDM] = useState(null);
 
-  if (activeDM) return <DMConversation dm={activeDM} onBack={() => setActiveDM(null)} />;
+  const updateLastMsg = (id, msg, time) => {
+    setDmList((prev) =>
+      prev.map((dm) => (dm.id === id ? { ...dm, lastMsg: msg, time, unread: 0 } : dm))
+    );
+  };
+
+  const openDM = (dm) => {
+    setDmList((prev) =>
+      prev.map((d) => (d.id === dm.id ? { ...d, unread: 0 } : d))
+    );
+    setActiveDM(dm);
+  };
+
+  if (activeDM) {
+    return (
+      <DMConversation
+        dm={activeDM}
+        onBack={() => setActiveDM(null)}
+        onUpdateLastMsg={updateLastMsg}
+      />
+    );
+  }
 
   return (
     <div className="px-4 py-4 pb-28">
@@ -150,10 +165,10 @@ export default function Messages() {
       </div>
 
       <div className="flex flex-col gap-3">
-        {DM_LIST.map((dm, index) => (
+        {dmList.map((dm, index) => (
           <div
             key={dm.id}
-            onClick={() => setActiveDM(dm)}
+            onClick={() => openDM(dm)}
             className="pop-up rounded-2xl px-4 py-4 border flex items-center gap-3 cursor-pointer shadow-sm transition-colors duration-300"
             style={{
               backgroundColor: "var(--card)",
@@ -162,11 +177,11 @@ export default function Messages() {
             }}
           >
             <Avatar initials={dm.avatar} color="#8b5cf6" size={44} />
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <div className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>{dm.name}</div>
-              <div className="text-xs mt-0.5" style={{ color: "var(--text-secondary)" }}>{dm.lastMsg}</div>
+              <div className="text-xs mt-0.5 truncate" style={{ color: "var(--text-secondary)" }}>{dm.lastMsg}</div>
             </div>
-            <div className="text-right flex flex-col items-end gap-1">
+            <div className="text-right flex flex-col items-end gap-1 shrink-0">
               <div className="text-xs" style={{ color: "var(--text-secondary)" }}>{dm.time}</div>
               {dm.unread > 0 && (
                 <div className="w-5 h-5 rounded-full bg-emerald-700 text-white text-xs font-bold flex items-center justify-center">
