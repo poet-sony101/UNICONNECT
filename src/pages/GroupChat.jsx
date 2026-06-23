@@ -24,8 +24,10 @@ const styles = `
 
 export default function GroupChat({ messages, setMessages }) {
   const [input, setInput] = useState("");
+  const [replyTo, setReplyTo] = useState(null);
   const { department } = useUser();
   const bottomRef = useRef(null);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -42,9 +44,16 @@ export default function GroupChat({ messages, setMessages }) {
         content: input,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         mine: true,
+        replyTo: replyTo || null,
       },
     ]);
     setInput("");
+    setReplyTo(null);
+  };
+
+  const handleReply = (msg) => {
+    setReplyTo(msg);
+    inputRef.current?.focus();
   };
 
   return (
@@ -81,8 +90,25 @@ export default function GroupChat({ messages, setMessages }) {
                   {msg.sender}
                 </div>
               )}
+
+              {/* Reply bubble */}
+              {msg.replyTo && (
+                <div
+                  className="px-3 py-1.5 rounded-xl rounded-b-none text-xs mb-0.5 border-l-4 border-emerald-500 opacity-80"
+                  style={{ backgroundColor: "var(--border)", color: "var(--text-secondary)" }}
+                >
+                  <span className="font-semibold">{msg.replyTo.sender}: </span>
+                  {msg.replyTo.content.length > 50
+                    ? msg.replyTo.content.slice(0, 50) + "..."
+                    : msg.replyTo.content}
+                </div>
+              )}
+
+              {/* Main bubble */}
               <div
                 className={`px-4 py-2.5 text-sm leading-relaxed transition-colors duration-300 ${
+                  msg.replyTo ? "rounded-t-none" : ""
+                } ${
                   msg.mine
                     ? "bg-emerald-700 text-white rounded-2xl rounded-br-sm"
                     : "rounded-2xl rounded-bl-sm border"
@@ -95,11 +121,15 @@ export default function GroupChat({ messages, setMessages }) {
               >
                 {msg.content}
               </div>
-              <div
-                className={`text-[10px] mt-1 ${msg.mine ? "text-right" : ""}`}
-                style={{ color: "var(--text-secondary)" }}
-              >
-                {msg.time}
+
+              {/* Time + Reply button */}
+              <div className={`flex items-center gap-2 mt-1 ${msg.mine ? "flex-row-reverse" : ""}`}>
+                  <div className="text-[10px]" style={{ color: "var(--text-secondary)" }}>
+                    {msg.time}
+                  </div>
+                <button onClick={() => handleReply(msg)} className="text-[10px] font-semibold" style={{ color: "#007A3D", background: "none", border: "none", cursor: "pointer" }}>
+                  ↩ Reply
+                </button>
               </div>
             </div>
           </div>
@@ -107,16 +137,39 @@ export default function GroupChat({ messages, setMessages }) {
         <div ref={bottomRef} />
       </div>
 
+      {/* Reply preview */}
+      {replyTo && (
+        <div
+          className="px-4 py-2.5 flex items-center justify-between border-t border-l-4 border-emerald-500"
+          style={{ backgroundColor: "var(--card)", borderTopColor: "var(--border)" }}
+        >
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-bold text-emerald-600">Replying to {replyTo.sender}</div>
+            <div className="text-xs truncate" style={{ color: "var(--text-secondary)" }}>
+              {replyTo.content}
+            </div>
+          </div>
+          <button
+            onClick={() => setReplyTo(null)}
+            className="ml-3 text-lg font-bold"
+            style={{ color: "var(--text-secondary)", background: "none", border: "none", cursor: "pointer" }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Input */}
       <div
         className="px-4 py-3 flex gap-3 items-center border-t transition-colors duration-300"
         style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
       >
         <input
+          ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-          placeholder="Message group..."
+          placeholder={replyTo ? `Reply to ${replyTo.sender}...` : "Message group..."}
           className="flex-1 rounded-full px-4 py-2.5 text-sm outline-none transition-colors duration-300"
           style={{ backgroundColor: "var(--bg)", color: "var(--text-primary)" }}
         />
