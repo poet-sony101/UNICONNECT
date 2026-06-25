@@ -35,8 +35,8 @@ const INITIAL_DM_LIST = [
 ];
 
 function MainApp() {
-  const [authed, setAuthed] = useState(false);
-  const [onboarded, setOnboarded] = useState(false);
+  const [authed, setAuthed] = useState(!!localStorage.getItem("token"));
+  const [onboarded, setOnboarded] = useState(!!localStorage.getItem("token") && !!JSON.parse(localStorage.getItem("user") || "{}").department_id);
   const [tab, setTab] = useState("feed");
   const { theme, toggleTheme } = useTheme();
   const [groupMessages, setGroupMessages] = useState(INITIAL_GROUP_MESSAGES);
