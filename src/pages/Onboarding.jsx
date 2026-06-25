@@ -4,25 +4,58 @@ import WelcomeStep from "../components/onboarding/WelcomeStep";
 import FacultyStep from "../components/onboarding/FacultyStep";
 import DepartmentStep from "../components/onboarding/DepartmentStep";
 import UploadStep from "../components/onboarding/UploadStep";
+import API from "../utils/api";
 
 export default function Onboarding({ onComplete }) {
   const [step, setStep] = useState(0);
   const { faculty, setFaculty, department, setDepartment, setIsVerified } = useUser();
 
   const handleFacultySelect = (f) => {
-    setFaculty(f);
-    setStep(2);
-  };
+  setFaculty(f);
+  setStep(2);
+};
 
-  const handleDeptSelect = (d) => {
-    setDepartment(d);
-    setStep(3);
-  };
+const handleDeptSelect = async (d) => {
+  setDepartment(d);
+  setStep(3);
+};
 
-  const handleComplete = () => {
+const handleComplete = async () => {
+  try {
+    // Get department ID from backend
+    const res = await API.get("/departments");
+    const allFaculties = res.data;
+
+    // Find the department ID
+    let deptId = null;
+    allFaculties.forEach((f) => {
+      f.departments.forEach((d) => {
+        if (d.name === department) deptId = d.id;
+      });
+    });
+
+    if (deptId) {
+      // Save department to backend
+      await API.post("/users/join-department", { departmentId: deptId });
+
+      // Update local user
+      const updatedUser = {
+        ...JSON.parse(localStorage.getItem("user") || "{}"),
+        department_id: deptId,
+        department,
+        faculty,
+      };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+    }
+
     setIsVerified(true);
     onComplete();
-  };
+  } catch (err) {
+    console.error("Onboarding error:", err);
+    setIsVerified(true);
+    onComplete();
+  }
+};
 
   return (
     <div className="min-h-screen bg-[#0f1117] flex flex-col items-center justify-center px-6 py-10">
