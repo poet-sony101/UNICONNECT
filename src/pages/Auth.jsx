@@ -1,4 +1,5 @@
 import { useState } from "react";
+import API from "../utils/api";
 
 const styles = `
   @keyframes fadeUp {
@@ -40,26 +41,42 @@ export default function Auth({ onComplete }) {
     setError("");
   };
 
-  const handleSubmit = () => {
-    if (!form.email || !form.password) {
-      setError("Please fill in all fields.");
-      return;
-    }
-    if (!isLogin && !form.username) {
-      setError("Please enter a username.");
-      return;
-    }
-    if (form.password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
+  const handleSubmit = async () => {
+  if (!form.email || !form.password) {
+    setError("Please fill in all fields.");
+    return;
+  }
+  if (!isLogin && !form.username) {
+    setError("Please enter a username.");
+    return;
+  }
+  if (form.password.length < 6) {
+    setError("Password must be at least 6 characters.");
+    return;
+  }
 
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      onComplete();
-    }, 1500);
-  };
+  setLoading(true);
+  setError("");
+
+  try {
+    const endpoint = isLogin ? "/auth/login" : "/auth/register";
+    const payload = isLogin
+      ? { email: form.email, password: form.password }
+      : { username: form.username, email: form.email, password: form.password };
+
+    const res = await API.post(endpoint, payload);
+
+    // Save token and user to localStorage
+    localStorage.setItem("token", res.data.token);
+    localStorage.setItem("user", JSON.stringify(res.data.user));
+
+    setLoading(false);
+    onComplete();
+  } catch (err) {
+    setLoading(false);
+    setError(err.response?.data?.message || "Something went wrong. Try again.");
+  }
+};
 
   return (
     <div
