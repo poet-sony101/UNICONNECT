@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Avatar from "../components/layout/Avatar";
 import Tag from "../components/layout/Tag";
 import { useUser } from "../context/UserContext";
 import { motion, AnimatePresence } from "framer-motion";
+import useFeed from "../hooks/useFeed";
 
 const styles = `
   @keyframes bounceHeart {
@@ -45,59 +46,34 @@ const styles = `
   }
 `;
 
-const INITIAL_COMMENTS = {
-  1: [
-    { id: 1, author: "Tunde O.", avatar: "TO", text: "Thanks for the info!", time: "1h ago" },
-    { id: 2, author: "Chioma A.", avatar: "CA", text: "Finally! Been waiting for this.", time: "30m ago" },
-  ],
-  2: [
-    { id: 1, author: "Amaka B.", avatar: "AB", text: "Can't wait for orientation 🎉", time: "3h ago" },
-  ],
-  3: [],
-};
-
-const POSTS = [
-  {
-    id: 1,
-    author: "UNILAG Admin",
-    avatar: "UA",
-    avatarColor: "#007A3D",
-    time: "2h ago",
-    content: "Post-UTME screening for 2026/2027 session begins July 14th. All candidates should visit the admissions portal to complete registration.",
-    likes: 234,
-    comments: 41,
-    tag: "Admissions",
-  },
-  {
-    id: 2,
-    author: "CS Department",
-    avatar: "CS",
-    avatarColor: "#1a56db",
-    time: "5h ago",
-    content: "Welcome to all newly admitted 100L Computer Science students! Your orientation week begins Monday, July 21st.",
-    likes: 189,
-    comments: 67,
-    tag: "Department News",
-  },
-  {
-    id: 3,
-    author: "Student Union UNILAG",
-    avatar: "SU",
-    avatarColor: "#7c3aed",
-    time: "1d ago",
-    content: "The SUG elections are scheduled for next month. Interested candidates should pick up nomination forms from the Dean of Students office.",
-    likes: 412,
-    comments: 98,
-    tag: "Campus Life",
-  },
-];
-
-function CommentsSheet({ post, comments, onClose, onAddComment }) {
+function CommentsSheet({ post, onClose, fetchComments, addComment }) {
+  const [comments, setComments] = useState([]);
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const submit = () => {
+  useEffect(() => {
+    fetchComments(post.id).then((data) => {
+      setComments(data);
+      setLoading(false);
+    });
+  }, [post.id]);
+
+  const submit = async () => {
     if (!input.trim()) return;
-    onAddComment(post.id, input);
+    await addComment(post.id, input);
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    setComments((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        author_id: user.id,
+        full_name: user.full_name || user.username,
+        username: user.username,
+        text: input,
+        content: input,
+        created_at: new Date().toISOString(),
+      },
+    ]);
     setInput("");
   };
 
@@ -112,15 +88,18 @@ function CommentsSheet({ post, comments, onClose, onAddComment }) {
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Handle */}
         <div className="w-10 h-1 rounded-full bg-gray-300 mx-auto mb-4" />
         <div className="font-bold text-base mb-4" style={{ color: "var(--text-primary)" }}>
           Comments ({comments.length})
         </div>
 
-        {/* Comments list */}
         <div className="flex-1 overflow-y-auto flex flex-col gap-4 mb-4">
-          {comments.length === 0 && (
+          {loading && (
+            <div className="text-center py-8" style={{ color: "var(--text-secondary)" }}>
+              Loading...
+            </div>
+          )}
+          {!loading && comments.length === 0 && (
             <div className="text-center py-8" style={{ color: "var(--text-secondary)" }}>
               <div className="text-3xl mb-2">💬</div>
               <div className="text-sm">No comments yet. Be the first!</div>
@@ -128,17 +107,19 @@ function CommentsSheet({ post, comments, onClose, onAddComment }) {
           )}
           {comments.map((c) => (
             <div key={c.id} className="flex gap-3">
-              <Avatar initials={c.avatar} color="#6366f1" size={32} />
+              <Avatar initials={(c.username || "U").slice(0, 2).toUpperCase()} color="#6366f1" size={32} />
               <div>
-                <div className="text-xs font-bold mb-0.5" style={{ color: "var(--text-primary)" }}>{c.author}</div>
-                <div className="text-sm" style={{ color: "var(--text-secondary)" }}>{c.text}</div>
-                <div className="text-[10px] mt-0.5" style={{ color: "var(--text-secondary)" }}>{c.time}</div>
+                <div className="text-xs font-bold mb-0.5" style={{ color: "var(--text-primary)" }}>
+                  {c.full_name || c.username}
+                </div>
+                <div className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                  {c.content || c.text}
+                </div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Input */}
         <div className="flex gap-2 items-center pt-3 border-t" style={{ borderColor: "var(--border)" }}>
           <input
             value={input}
@@ -234,25 +215,47 @@ function ShareSheet({ post, onClose }) {
 }
 
 export default function Feed() {
-  const [likedPosts, setLikedPosts] = useState({});
-  const [comments, setComments] = useState(INITIAL_COMMENTS);
+  const { department } = useUser();
+  const { posts, loading, toggleLike, addComment, fetchComments } = useFeed();
   const [activeComments, setActiveComments] = useState(null);
   const [activeShare, setActiveShare] = useState(null);
-  const { department } = useUser();
 
-  const toggleLike = (id) => {
-    setLikedPosts((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="text-3xl mb-2">⏳</div>
+          <div className="text-sm" style={{ color: "var(--text-secondary)" }}>Loading feed...</div>
+        </div>
+      </div>
+    );
+  }
 
-  const addComment = (postId, text) => {
-    setComments((prev) => ({
-      ...prev,
-      [postId]: [
-        ...prev[postId],
-        { id: Date.now(), author: "You", avatar: "ME", text, time: "Just now" },
-      ],
-    }));
-  };
+  if (posts.length === 0) {
+    return (
+      <div className="px-4 pt-4 pb-28">
+        <style>{styles}</style>
+        <div
+          className="rounded-2xl px-4 py-3.5 flex items-center gap-3 mb-5 shadow-sm"
+          style={{ background: "linear-gradient(135deg, #064e3b, #4c1d95)" }}
+        >
+          <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-xl">🎓</div>
+          <div>
+            <div className="text-sm font-bold text-white">{department} — 100L</div>
+            <div className="text-xs text-white/60">UNILAG · Verified Student</div>
+          </div>
+          <div className="ml-auto">
+            <span className="text-xs bg-white/10 text-white/80 px-2 py-1 rounded-full font-medium">✓ Verified</span>
+          </div>
+        </div>
+        <div className="text-center py-16" style={{ color: "var(--text-secondary)" }}>
+          <div className="text-4xl mb-3">📭</div>
+          <div className="font-bold text-base mb-1" style={{ color: "var(--text-primary)" }}>No posts yet</div>
+          <div className="text-sm">Be the first to post something!</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 pt-4 pb-28">
@@ -275,7 +278,7 @@ export default function Feed() {
 
       {/* Posts */}
       <div className="flex flex-col gap-4">
-        {POSTS.map((post, index) => (
+        {posts.map((post, index) => (
           <motion.div
             key={post.id}
             initial={{ opacity: 0, y: 20 }}
@@ -285,14 +288,20 @@ export default function Feed() {
             style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
           >
             <div className="flex items-center gap-3 mb-3">
-              <Avatar initials={post.avatar} color={post.avatarColor} size={40} />
+              <Avatar
+                initials={(post.full_name || post.username || "U").slice(0, 2).toUpperCase()}
+                color={post.avatar_color || "#007A3D"}
+                size={40}
+              />
               <div className="flex-1">
                 <div className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>
-                  {post.author}
+                  {post.full_name || post.username}
                 </div>
-                <div className="text-xs" style={{ color: "var(--text-secondary)" }}>{post.time}</div>
+                <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                  {new Date(post.created_at).toLocaleDateString()}
+                </div>
               </div>
-              <Tag label={post.tag} />
+              {post.tag && <Tag label={post.tag} />}
             </div>
 
             <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--text-secondary)" }}>
@@ -309,10 +318,10 @@ export default function Feed() {
                   el.classList.add("heart-bounce");
                 }}
                 className="flex items-center gap-1.5 text-sm font-semibold"
-                style={{ color: likedPosts[post.id] ? "#007A3D" : "var(--text-secondary)" }}
+                style={{ color: post.liked ? "#007A3D" : "var(--text-secondary)" }}
               >
-                <span id={`heart-${post.id}`}>{likedPosts[post.id] ? "❤️" : "🤍"}</span>{" "}
-                {post.likes + (likedPosts[post.id] ? 1 : 0)}
+                <span id={`heart-${post.id}`}>{post.liked ? "❤️" : "🤍"}</span>{" "}
+                {post.like_count}
               </button>
 
               <button
@@ -320,7 +329,7 @@ export default function Feed() {
                 className="flex items-center gap-1.5 text-sm font-semibold"
                 style={{ color: "var(--text-secondary)" }}
               >
-                💬 {comments[post.id]?.length || post.comments}
+                💬 {post.comment_count}
               </button>
 
               <button
@@ -340,9 +349,9 @@ export default function Feed() {
         {activeComments && (
           <CommentsSheet
             post={activeComments}
-            comments={comments[activeComments.id] || []}
             onClose={() => setActiveComments(null)}
-            onAddComment={addComment}
+            fetchComments={fetchComments}
+            addComment={addComment}
           />
         )}
       </AnimatePresence>
