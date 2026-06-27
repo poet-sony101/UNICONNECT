@@ -4,7 +4,10 @@ import Tag from "../components/layout/Tag";
 import { useUser } from "../context/UserContext";
 import { motion, AnimatePresence } from "framer-motion";
 import useFeed from "../hooks/useFeed";
+import API from "../utils/api";
 
+
+const [createPost, setCreatePost] = useState(false);
 const styles = `
   @keyframes bounceHeart {
     0% { transform: scale(1); }
@@ -214,12 +217,101 @@ function ShareSheet({ post, onClose }) {
   );
 }
 
+function CreatePostSheet({ onClose, onPost }) {
+  const [content, setContent] = useState("");
+  const [tag, setTag] = useState("Campus Life");
+  const [loading, setLoading] = useState(false);
+
+  const submit = async () => {
+    if (!content.trim()) return;
+    setLoading(true);
+    try {
+      const res = await API.post("/posts", { content, tag });
+      onPost(res.data);
+      onClose();
+    } catch (err) {
+      console.error("Post error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="overlay" onClick={onClose}>
+      <motion.div
+        className="sheet"
+        style={{ backgroundColor: "var(--card)" }}
+        initial={{ y: 300 }}
+        animate={{ y: 0 }}
+        exit={{ y: 300 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="w-10 h-1 rounded-full bg-gray-300 mx-auto mb-4" />
+        <div className="font-bold text-base mb-4" style={{ color: "var(--text-primary)" }}>
+          Create Post
+        </div>
+
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="What's on your mind?"
+          rows={4}
+          className="w-full rounded-2xl p-4 text-sm outline-none border transition-colors duration-300 mb-3"
+          style={{
+            backgroundColor: "var(--bg)",
+            borderColor: "var(--border)",
+            color: "var(--text-primary)",
+            resize: "none",
+            fontFamily: "inherit",
+          }}
+        />
+
+        {/* Tag selector */}
+        <div className="flex gap-2 mb-4">
+          {["Admissions", "Department News", "Campus Life"].map((t) => (
+            <button
+              key={t}
+              onClick={() => setTag(t)}
+              className="px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors duration-300"
+              style={{
+                backgroundColor: tag === t ? "#007A3D" : "var(--bg)",
+                color: tag === t ? "#fff" : "var(--text-secondary)",
+                borderColor: tag === t ? "#007A3D" : "var(--border)",
+              }}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={submit}
+          disabled={loading || !content.trim()}
+          className="w-full py-3.5 rounded-xl font-bold text-sm text-white"
+          style={{
+            background: loading || !content.trim()
+              ? "#2d3139"
+              : "linear-gradient(135deg, #007A3D, #4c1d95)",
+            cursor: loading || !content.trim() ? "not-allowed" : "pointer",
+          }}
+        >
+          {loading ? "Posting..." : "Post"}
+        </button>
+      </motion.div>
+    </div>
+  );
+}
+
 export default function Feed() {
   const { department } = useUser();
   const { posts, loading, toggleLike, addComment, fetchComments } = useFeed();
   const [activeComments, setActiveComments] = useState(null);
   const [activeShare, setActiveShare] = useState(null);
-
+  const handleNewPost = (post) => {
+  // Refresh posts
+  window.location.reload();
+};
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -275,6 +367,27 @@ export default function Feed() {
           <span className="text-xs bg-white/10 text-white/80 px-2 py-1 rounded-full font-medium">✓ Verified</span>
         </div>
       </div>
+
+      {/* Create post button */}
+<div
+  className="rounded-2xl p-4 border mb-4 shadow-sm transition-colors duration-300"
+  style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
+>
+  <div className="flex items-center gap-3">
+    <Avatar
+      initials={(JSON.parse(localStorage.getItem("user") || "{}").username || "ME").slice(0, 2).toUpperCase()}
+      color="#7c3aed"
+      size={38}
+    />
+    <button
+      onClick={() => setCreatePost(true)}
+      className="flex-1 text-left px-4 py-2.5 rounded-full text-sm transition-colors duration-300"
+      style={{ backgroundColor: "var(--bg)", color: "var(--text-secondary)" }}
+    >
+      What's on your mind?
+    </button>
+  </div>
+</div>
 
       {/* Posts */}
       <div className="flex flex-col gap-4">
@@ -365,6 +478,15 @@ export default function Feed() {
           />
         )}
       </AnimatePresence>
+
+      <AnimatePresence>
+        {createPost && (
+          <CreatePostSheet
+            onClose={() => setCreatePost(false)}
+            onPost={handleNewPost}
+          />
+  )}
+</AnimatePresence>
     </div>
   );
 }
