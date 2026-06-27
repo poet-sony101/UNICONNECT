@@ -332,17 +332,23 @@ export default function Profile() {
       </div>
 
       {/* Sign out */}
-      <div className="px-5 mt-2">
-        <button
-          onClick={() => {
-            localStorage.clear();
-            window.location.reload();
-          }}
-          className="w-full py-3.5 rounded-2xl border border-red-100 bg-red-50 text-red-500 font-bold text-sm"
-        >
-          Sign Out
-        </button>
-      </div>
+      <button
+  onClick={() => {
+    localStorage.clear();
+    window.location.reload();
+  }}
+  onMouseEnter={(e) => {
+    e.target.style.backgroundColor = "#fee2e2";
+    e.target.style.borderColor = "#fca5a5";
+  }}
+  onMouseLeave={(e) => {
+    e.target.style.backgroundColor = "#fef2f2";
+    e.target.style.borderColor = "#fee2e2";
+  }}
+  className="w-full py-3.5 rounded-2xl border border-red-100 bg-red-50 text-red-500 font-bold text-sm transition-all duration-200 cursor-pointer"
+>
+  Sign Out
+</button>
 
       {/* Edit Profile Sheet */}
       <AnimatePresence>
