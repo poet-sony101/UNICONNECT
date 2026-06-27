@@ -21,6 +21,17 @@ const styles = `
   .pop-send {
     animation: popSend 0.3s ease forwards;
   }
+  .search-input {
+    width: 100%;
+    padding: 10px 16px;
+    border-radius: 22px;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    color: var(--text-primary);
+    font-size: 14px;
+    outline: none;
+    font-family: inherit;
+  }
 `;
 
 function DMConversation({ dm, onBack, onUpdateLastMsg }) {
@@ -35,7 +46,6 @@ function DMConversation({ dm, onBack, onUpdateLastMsg }) {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const roomId = [user.id, dm.id].sort().join("_");
 
-  // Load DM history
   useEffect(() => {
     const fetchMessages = async () => {
       try {
@@ -57,12 +67,9 @@ function DMConversation({ dm, onBack, onUpdateLastMsg }) {
     fetchMessages();
   }, [dm.id]);
 
-  // Socket.io — join DM room
   useEffect(() => {
     if (!socket.current) return;
-
     socket.current.emit("join_dm", roomId);
-
     socket.current.on("new_direct_message", (msg) => {
       if (msg.sender_id === user.id) return;
       setMessages((prev) => {
@@ -79,33 +86,18 @@ function DMConversation({ dm, onBack, onUpdateLastMsg }) {
         ];
       });
     });
-
-    return () => {
-      socket.current?.off("new_direct_message");
-    };
+    return () => { socket.current?.off("new_direct_message"); };
   }, [roomId]);
 
-  // Auto scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const sendMessage = () => {
     if (!input.trim() || !socket.current) return;
-
     const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-    const newMsg = {
-      id: Date.now(),
-      content: input,
-      mine: true,
-      time,
-      replyTo: replyTo || null,
-    };
-
-    setMessages((prev) => [...prev, newMsg]);
+    setMessages((prev) => [...prev, { id: Date.now(), content: input, mine: true, time, replyTo: replyTo || null }]);
     onUpdateLastMsg(dm.id, input, time);
-
     socket.current.emit("direct_message", {
       senderId: user.id,
       receiverId: dm.id,
@@ -113,7 +105,6 @@ function DMConversation({ dm, onBack, onUpdateLastMsg }) {
       senderName: user.full_name || user.username,
       replyTo: replyTo || null,
     });
-
     setInput("");
     setReplyTo(null);
   };
@@ -128,9 +119,7 @@ function DMConversation({ dm, onBack, onUpdateLastMsg }) {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="text-3xl mb-2">⏳</div>
-          <div className="text-sm" style={{ color: "var(--text-secondary)" }}>
-            Loading messages...
-          </div>
+          <div className="text-sm" style={{ color: "var(--text-secondary)" }}>Loading messages...</div>
         </div>
       </div>
     );
@@ -145,16 +134,11 @@ function DMConversation({ dm, onBack, onUpdateLastMsg }) {
         className="px-4 py-3.5 flex items-center gap-3"
         style={{ background: "linear-gradient(135deg, #064e3b, #4c1d95)" }}
       >
-        <button
-          onClick={onBack}
-          className="text-white/80 text-xl bg-transparent border-none cursor-pointer"
-        >
-          ‹
-        </button>
-        <Avatar initials={dm.avatar} color="#8b5cf6" size={34} />
+        <button onClick={onBack} className="text-white/80 text-xl bg-transparent border-none cursor-pointer">‹</button>
+        <Avatar initials={(dm.name || "U").slice(0, 2).toUpperCase()} color="#8b5cf6" size={34} />
         <div>
           <div className="font-bold text-sm text-white">{dm.name}</div>
-          <div className="text-xs text-white/60">UNILAG · 100L</div>
+          <div className="text-xs text-white/60">{dm.department || "UNILAG"}</div>
         </div>
       </div>
 
@@ -166,9 +150,7 @@ function DMConversation({ dm, onBack, onUpdateLastMsg }) {
         {messages.length === 0 && (
           <div className="text-center py-16" style={{ color: "var(--text-secondary)" }}>
             <div className="text-4xl mb-3">💬</div>
-            <div className="font-bold text-base mb-1" style={{ color: "var(--text-primary)" }}>
-              No messages yet
-            </div>
+            <div className="font-bold text-base mb-1" style={{ color: "var(--text-primary)" }}>No messages yet</div>
             <div className="text-sm">Say hi to {dm.name.split(" ")[0]}!</div>
           </div>
         )}
@@ -180,44 +162,25 @@ function DMConversation({ dm, onBack, onUpdateLastMsg }) {
             style={{ animationDelay: `${index * 0.08}s` }}
           >
             <div className="max-w-[75%]">
-              {/* Reply bubble */}
               {msg.replyTo && (
                 <div
                   className="px-3 py-1.5 rounded-xl rounded-b-none text-xs mb-0.5 border-l-4 border-emerald-500 opacity-80"
                   style={{ backgroundColor: "var(--border)", color: "var(--text-secondary)" }}
                 >
-                  <span className="font-semibold">
-                    {msg.replyTo.mine ? "You" : dm.name.split(" ")[0]}:{" "}
-                  </span>
-                  {msg.replyTo.content.length > 50
-                    ? msg.replyTo.content.slice(0, 50) + "..."
-                    : msg.replyTo.content}
+                  <span className="font-semibold">{msg.replyTo.mine ? "You" : dm.name.split(" ")[0]}: </span>
+                  {msg.replyTo.content.length > 50 ? msg.replyTo.content.slice(0, 50) + "..." : msg.replyTo.content}
                 </div>
               )}
-
-              {/* Main bubble */}
               <div
-                className={`px-4 py-2.5 text-sm leading-relaxed border transition-colors duration-300 ${
-                  msg.replyTo ? "rounded-t-none" : ""
-                } ${
-                  msg.mine
-                    ? "bg-emerald-700 text-white rounded-2xl rounded-br-sm border-transparent"
-                    : "rounded-2xl rounded-bl-sm"
+                className={`px-4 py-2.5 text-sm leading-relaxed border transition-colors duration-300 ${msg.replyTo ? "rounded-t-none" : ""} ${
+                  msg.mine ? "bg-emerald-700 text-white rounded-2xl rounded-br-sm border-transparent" : "rounded-2xl rounded-bl-sm"
                 }`}
-                style={
-                  !msg.mine
-                    ? { backgroundColor: "var(--card)", borderColor: "var(--border)", color: "var(--text-primary)" }
-                    : {}
-                }
+                style={!msg.mine ? { backgroundColor: "var(--card)", borderColor: "var(--border)", color: "var(--text-primary)" } : {}}
               >
                 {msg.content}
               </div>
-
-              {/* Time + Reply */}
               <div className={`flex items-center gap-2 mt-1 ${msg.mine ? "flex-row-reverse" : ""}`}>
-                <div className="text-[10px]" style={{ color: "var(--text-secondary)" }}>
-                  {msg.time}
-                </div>
+                <div className="text-[10px]" style={{ color: "var(--text-secondary)" }}>{msg.time}</div>
                 <button
                   onClick={() => handleReply(msg)}
                   className="text-[10px] font-semibold"
@@ -242,17 +205,13 @@ function DMConversation({ dm, onBack, onUpdateLastMsg }) {
             <div className="text-xs font-bold text-emerald-600">
               Replying to {replyTo.mine ? "yourself" : dm.name.split(" ")[0]}
             </div>
-            <div className="text-xs truncate" style={{ color: "var(--text-secondary)" }}>
-              {replyTo.content}
-            </div>
+            <div className="text-xs truncate" style={{ color: "var(--text-secondary)" }}>{replyTo.content}</div>
           </div>
           <button
             onClick={() => setReplyTo(null)}
             className="ml-3 text-lg font-bold"
             style={{ color: "var(--text-secondary)", background: "none", border: "none", cursor: "pointer" }}
-          >
-            ✕
-          </button>
+          >✕</button>
         </div>
       )}
 
@@ -266,11 +225,7 @@ function DMConversation({ dm, onBack, onUpdateLastMsg }) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-          placeholder={
-            replyTo
-              ? `Reply to ${replyTo.mine ? "yourself" : dm.name.split(" ")[0]}...`
-              : `Message ${dm.name.split(" ")[0]}...`
-          }
+          placeholder={replyTo ? `Reply to ${replyTo.mine ? "yourself" : dm.name.split(" ")[0]}...` : `Message ${dm.name.split(" ")[0]}...`}
           className="flex-1 rounded-full px-4 py-2.5 text-sm outline-none transition-colors duration-300"
           style={{ backgroundColor: "var(--bg)", color: "var(--text-primary)" }}
         />
@@ -284,9 +239,7 @@ function DMConversation({ dm, onBack, onUpdateLastMsg }) {
             el.classList.add("pop-send");
           }}
           className="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center text-lg font-bold"
-        >
-          ↑
-        </button>
+        >↑</button>
       </div>
     </div>
   );
@@ -294,6 +247,10 @@ function DMConversation({ dm, onBack, onUpdateLastMsg }) {
 
 export default function Messages({ dmList, setDmList }) {
   const [activeDM, setActiveDM] = useState(null);
+  const [searching, setSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   const updateLastMsg = (id, msg, time) => {
     setDmList((prev) =>
@@ -305,7 +262,24 @@ export default function Messages({ dmList, setDmList }) {
     setDmList((prev) =>
       prev.map((d) => (d.id === dm.id ? { ...d, unread: 0 } : d))
     );
+    setSearching(false);
+    setSearchQuery("");
+    setSearchResults([]);
     setActiveDM(dm);
+  };
+
+  const searchUsers = async (q) => {
+    setSearchQuery(q);
+    if (!q.trim()) { setSearchResults([]); return; }
+    setSearchLoading(true);
+    try {
+      const res = await API.get(`/users/search?q=${q}`);
+      setSearchResults(res.data);
+    } catch (err) {
+      console.error("Search error:", err);
+    } finally {
+      setSearchLoading(false);
+    }
   };
 
   if (activeDM) {
@@ -321,20 +295,88 @@ export default function Messages({ dmList, setDmList }) {
   return (
     <div className="px-4 py-4 pb-28">
       <style>{styles}</style>
-      <div
-        className="font-extrabold text-xl mb-5 transition-colors duration-300"
-        style={{ color: "var(--text-primary)" }}
-      >
-        Messages
+
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="font-extrabold text-xl transition-colors duration-300" style={{ color: "var(--text-primary)" }}>
+          Messages
+        </div>
+        <button
+          onClick={() => setSearching(!searching)}
+          className="w-9 h-9 rounded-xl flex items-center justify-center text-lg transition-colors duration-300"
+          style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}
+        >
+          {searching ? "✕" : "✏️"}
+        </button>
       </div>
 
-      {dmList.length === 0 ? (
+      {/* Search box */}
+      {searching && (
+        <div className="mb-4">
+          <input
+            value={searchQuery}
+            onChange={(e) => searchUsers(e.target.value)}
+            placeholder="Search by name or username..."
+            className="search-input"
+            autoFocus
+          />
+
+          {/* Search results */}
+          {searchLoading && (
+            <div className="text-center py-4 text-sm" style={{ color: "var(--text-secondary)" }}>
+              Searching...
+            </div>
+          )}
+          {searchResults.length > 0 && (
+            <div className="flex flex-col gap-2 mt-3">
+              {searchResults.map((u) => (
+                <div
+                  key={u.id}
+                  onClick={() => openDM({
+                    id: u.id,
+                    name: u.full_name || u.username,
+                    avatar: (u.full_name || u.username || "U").slice(0, 2).toUpperCase(),
+                    department: u.department,
+                    lastMsg: "",
+                    time: "",
+                    unread: 0,
+                  })}
+                  className="rounded-2xl px-4 py-3.5 border flex items-center gap-3 cursor-pointer transition-colors duration-300"
+                  style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
+                >
+                  <Avatar
+                    initials={(u.full_name || u.username || "U").slice(0, 2).toUpperCase()}
+                    color="#8b5cf6"
+                    size={40}
+                  />
+                  <div>
+                    <div className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>
+                      {u.full_name || u.username}
+                    </div>
+                    <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                      @{u.username} · {u.department || "UNILAG"}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {!searchLoading && searchQuery && searchResults.length === 0 && (
+            <div className="text-center py-4 text-sm" style={{ color: "var(--text-secondary)" }}>
+              No users found
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* DM List */}
+      {dmList.length === 0 && !searching ? (
         <div className="text-center py-16" style={{ color: "var(--text-secondary)" }}>
           <div className="text-4xl mb-3">💬</div>
           <div className="font-bold text-base mb-1" style={{ color: "var(--text-primary)" }}>
             No messages yet
           </div>
-          <div className="text-sm">Start a conversation with a coursemate!</div>
+          <div className="text-sm">Tap ✏️ to find and message a coursemate!</div>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -349,22 +391,13 @@ export default function Messages({ dmList, setDmList }) {
                 animationDelay: `${index * 0.1}s`,
               }}
             >
-              <Avatar initials={dm.avatar} color="#8b5cf6" size={44} />
+              <Avatar initials={(dm.name || "U").slice(0, 2).toUpperCase()} color="#8b5cf6" size={44} />
               <div className="flex-1 min-w-0">
-                <div className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>
-                  {dm.name}
-                </div>
-                <div
-                  className="text-xs mt-0.5 truncate"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  {dm.lastMsg}
-                </div>
+                <div className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>{dm.name}</div>
+                <div className="text-xs mt-0.5 truncate" style={{ color: "var(--text-secondary)" }}>{dm.lastMsg}</div>
               </div>
               <div className="text-right flex flex-col items-end gap-1 shrink-0">
-                <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                  {dm.time}
-                </div>
+                <div className="text-xs" style={{ color: "var(--text-secondary)" }}>{dm.time}</div>
                 {dm.unread > 0 && (
                   <div className="w-5 h-5 rounded-full bg-emerald-700 text-white text-xs font-bold flex items-center justify-center">
                     {dm.unread}
