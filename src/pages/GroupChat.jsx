@@ -48,6 +48,7 @@ export default function GroupChat({ messages, setMessages }) {
           content: msg.content,
           time: new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           mine: msg.sender_id === user.id,
+          replyTo: null,
         }));
         setMessages(formatted);
       } catch (err) {
@@ -67,16 +68,19 @@ export default function GroupChat({ messages, setMessages }) {
     socket.current.emit("join_department", departmentId);
 
     socket.current.on("new_group_message", (msg) => {
+      // Only add messages from other users (we already added ours locally)
+      if (msg.sender_id === user.id) return;
+
       const formatted = {
         id: msg.id,
-        sender: msg.full_name || msg.username,
-        avatar: (msg.full_name || msg.username || "U").slice(0, 2).toUpperCase(),
+        sender: msg.username,
+        avatar: (msg.username || "U").slice(0, 2).toUpperCase(),
         content: msg.content,
         time: new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        mine: msg.sender_id === user.id,
+        mine: false,
+        replyTo: msg.replyTo || null,
       };
       setMessages((prev) => {
-        // Avoid duplicates
         if (prev.find((m) => m.id === formatted.id)) return prev;
         return [...prev, formatted];
       });
@@ -95,12 +99,27 @@ export default function GroupChat({ messages, setMessages }) {
   const sendMessage = () => {
     if (!input.trim() || !socket.current) return;
 
+    const newMsg = {
+      id: Date.now(),
+      sender: user.full_name || user.username,
+      avatar: (user.full_name || user.username || "U").slice(0, 2).toUpperCase(),
+      content: input,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      mine: true,
+      replyTo: replyTo || null,
+    };
+
+    // Add to local messages immediately
+    setMessages((prev) => [...prev, newMsg]);
+
+    // Emit to socket
     socket.current.emit("group_message", {
       senderId: user.id,
       departmentId,
       content: input,
       senderName: user.full_name || user.username,
       avatarColor: user.avatar_color || "#7c3aed",
+      replyTo: replyTo || null,
     });
 
     setInput("");
@@ -227,7 +246,9 @@ export default function GroupChat({ messages, setMessages }) {
           style={{ backgroundColor: "var(--card)", borderTopColor: "var(--border)" }}
         >
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-bold text-emerald-600">Replying to {replyTo.sender}</div>
+            <div className="text-xs font-bold text-emerald-600">
+              Replying to {replyTo.sender}
+            </div>
             <div className="text-xs truncate" style={{ color: "var(--text-secondary)" }}>
               {replyTo.content}
             </div>
