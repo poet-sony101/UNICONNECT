@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import Avatar from "../components/layout/Avatar";
 import { useUser } from "../context/UserContext";
+import API from "../utils/api";
+import useSocket from "../hooks/useSocket";
 
 const styles = `
   @keyframes popSend {
@@ -25,28 +27,82 @@ const styles = `
 export default function GroupChat({ messages, setMessages }) {
   const [input, setInput] = useState("");
   const [replyTo, setReplyTo] = useState(null);
+  const [loading, setLoading] = useState(true);
   const { department } = useUser();
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
+  const socket = useSocket();
 
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const departmentId = user.department_id;
+
+  // Load messages from backend
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        const res = await API.get(`/messages/group/${departmentId}`);
+        const formatted = res.data.map((msg) => ({
+          id: msg.id,
+          sender: msg.full_name || msg.username,
+          avatar: (msg.full_name || msg.username || "U").slice(0, 2).toUpperCase(),
+          content: msg.content,
+          time: new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          mine: msg.sender_id === user.id,
+        }));
+        setMessages(formatted);
+      } catch (err) {
+        console.error("Fetch messages error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (departmentId) fetchMessages();
+  }, [departmentId]);
+
+  // Socket.io — join room and listen for new messages
+  useEffect(() => {
+    if (!socket.current || !departmentId) return;
+
+    socket.current.emit("join_department", departmentId);
+
+    socket.current.on("new_group_message", (msg) => {
+      const formatted = {
+        id: msg.id,
+        sender: msg.full_name || msg.username,
+        avatar: (msg.full_name || msg.username || "U").slice(0, 2).toUpperCase(),
+        content: msg.content,
+        time: new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        mine: msg.sender_id === user.id,
+      };
+      setMessages((prev) => {
+        // Avoid duplicates
+        if (prev.find((m) => m.id === formatted.id)) return prev;
+        return [...prev, formatted];
+      });
+    });
+
+    return () => {
+      socket.current?.off("new_group_message");
+    };
+  }, [departmentId]);
+
+  // Auto scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const sendMessage = () => {
-    if (!input.trim()) return;
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: prev.length + 1,
-        sender: "You",
-        avatar: "ME",
-        content: input,
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        mine: true,
-        replyTo: replyTo || null,
-      },
-    ]);
+    if (!input.trim() || !socket.current) return;
+
+    socket.current.emit("group_message", {
+      senderId: user.id,
+      departmentId,
+      content: input,
+      senderName: user.full_name || user.username,
+      avatarColor: user.avatar_color || "#7c3aed",
+    });
+
     setInput("");
     setReplyTo(null);
   };
@@ -55,6 +111,19 @@ export default function GroupChat({ messages, setMessages }) {
     setReplyTo(msg);
     inputRef.current?.focus();
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="text-3xl mb-2">⏳</div>
+          <div className="text-sm" style={{ color: "var(--text-secondary)" }}>
+            Loading chat...
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)]">
@@ -68,7 +137,7 @@ export default function GroupChat({ messages, setMessages }) {
         <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-lg">👥</div>
         <div>
           <div className="font-bold text-sm text-white">{department} — 100L</div>
-          <div className="text-xs text-white/60">247 members · UNILAG</div>
+          <div className="text-xs text-white/60">UNILAG · Live Chat</div>
         </div>
       </div>
 
@@ -77,6 +146,16 @@ export default function GroupChat({ messages, setMessages }) {
         className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4 transition-colors duration-300"
         style={{ backgroundColor: "var(--bg)" }}
       >
+        {messages.length === 0 && (
+          <div className="text-center py-16" style={{ color: "var(--text-secondary)" }}>
+            <div className="text-4xl mb-3">👋</div>
+            <div className="font-bold text-base mb-1" style={{ color: "var(--text-primary)" }}>
+              No messages yet
+            </div>
+            <div className="text-sm">Say hi to your coursemates!</div>
+          </div>
+        )}
+
         {messages.map((msg, index) => (
           <div
             key={msg.id}
@@ -122,12 +201,16 @@ export default function GroupChat({ messages, setMessages }) {
                 {msg.content}
               </div>
 
-              {/* Time + Reply button */}
+              {/* Time + Reply */}
               <div className={`flex items-center gap-2 mt-1 ${msg.mine ? "flex-row-reverse" : ""}`}>
-                  <div className="text-[10px]" style={{ color: "var(--text-secondary)" }}>
-                    {msg.time}
-                  </div>
-                <button onClick={() => handleReply(msg)} className="text-[10px] font-semibold" style={{ color: "#007A3D", background: "none", border: "none", cursor: "pointer" }}>
+                <div className="text-[10px]" style={{ color: "var(--text-secondary)" }}>
+                  {msg.time}
+                </div>
+                <button
+                  onClick={() => handleReply(msg)}
+                  className="text-[10px] font-semibold"
+                  style={{ color: "#007A3D", background: "none", border: "none", cursor: "pointer" }}
+                >
                   ↩ Reply
                 </button>
               </div>
