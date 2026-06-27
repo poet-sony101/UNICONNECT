@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Avatar from "../components/layout/Avatar";
 import Tag from "../components/layout/Tag";
 import { useUser } from "../context/UserContext";
@@ -6,8 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import useFeed from "../hooks/useFeed";
 import API from "../utils/api";
 
-
-const [createPost, setCreatePost] = useState(false);
 const styles = `
   @keyframes bounceHeart {
     0% { transform: scale(1); }
@@ -54,7 +52,7 @@ function CommentsSheet({ post, onClose, fetchComments, addComment }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  useState(() => {
     fetchComments(post.id).then((data) => {
       setComments(data);
       setLoading(false);
@@ -69,12 +67,9 @@ function CommentsSheet({ post, onClose, fetchComments, addComment }) {
       ...prev,
       {
         id: Date.now(),
-        author_id: user.id,
         full_name: user.full_name || user.username,
         username: user.username,
-        text: input,
         content: input,
-        created_at: new Date().toISOString(),
       },
     ]);
     setInput("");
@@ -110,13 +105,17 @@ function CommentsSheet({ post, onClose, fetchComments, addComment }) {
           )}
           {comments.map((c) => (
             <div key={c.id} className="flex gap-3">
-              <Avatar initials={(c.username || "U").slice(0, 2).toUpperCase()} color="#6366f1" size={32} />
+              <Avatar
+                initials={(c.username || "U").slice(0, 2).toUpperCase()}
+                color="#6366f1"
+                size={32}
+              />
               <div>
                 <div className="text-xs font-bold mb-0.5" style={{ color: "var(--text-primary)" }}>
                   {c.full_name || c.username}
                 </div>
                 <div className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                  {c.content || c.text}
+                  {c.content}
                 </div>
               </div>
             </div>
@@ -268,7 +267,7 @@ function CreatePostSheet({ onClose, onPost }) {
         />
 
         {/* Tag selector */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2 mb-4 flex-wrap">
           {["Admissions", "Department News", "Campus Life"].map((t) => (
             <button
               key={t}
@@ -278,6 +277,7 @@ function CreatePostSheet({ onClose, onPost }) {
                 backgroundColor: tag === t ? "#007A3D" : "var(--bg)",
                 color: tag === t ? "#fff" : "var(--text-secondary)",
                 borderColor: tag === t ? "#007A3D" : "var(--border)",
+                cursor: "pointer",
               }}
             >
               {t}
@@ -304,46 +304,24 @@ function CreatePostSheet({ onClose, onPost }) {
 }
 
 export default function Feed() {
-  const { department } = useUser();
-  const { posts, loading, toggleLike, addComment, fetchComments } = useFeed();
+  const [createPost, setCreatePost] = useState(false);
   const [activeComments, setActiveComments] = useState(null);
   const [activeShare, setActiveShare] = useState(null);
-  const handleNewPost = (post) => {
-  // Refresh posts
-  window.location.reload();
-};
+  const { department } = useUser();
+  const { posts, loading, toggleLike, addComment, fetchComments } = useFeed();
+
+  const handleNewPost = () => {
+    window.location.reload();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="text-3xl mb-2">⏳</div>
-          <div className="text-sm" style={{ color: "var(--text-secondary)" }}>Loading feed...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (posts.length === 0) {
-    return (
-      <div className="px-4 pt-4 pb-28">
-        <style>{styles}</style>
-        <div
-          className="rounded-2xl px-4 py-3.5 flex items-center gap-3 mb-5 shadow-sm"
-          style={{ background: "linear-gradient(135deg, #064e3b, #4c1d95)" }}
-        >
-          <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-xl">🎓</div>
-          <div>
-            <div className="text-sm font-bold text-white">{department} — 100L</div>
-            <div className="text-xs text-white/60">UNILAG · Verified Student</div>
+          <div className="text-sm" style={{ color: "var(--text-secondary)" }}>
+            Loading feed...
           </div>
-          <div className="ml-auto">
-            <span className="text-xs bg-white/10 text-white/80 px-2 py-1 rounded-full font-medium">✓ Verified</span>
-          </div>
-        </div>
-        <div className="text-center py-16" style={{ color: "var(--text-secondary)" }}>
-          <div className="text-4xl mb-3">📭</div>
-          <div className="font-bold text-base mb-1" style={{ color: "var(--text-primary)" }}>No posts yet</div>
-          <div className="text-sm">Be the first to post something!</div>
         </div>
       </div>
     );
@@ -364,98 +342,114 @@ export default function Feed() {
           <div className="text-xs text-white/60">UNILAG · Verified Student</div>
         </div>
         <div className="ml-auto">
-          <span className="text-xs bg-white/10 text-white/80 px-2 py-1 rounded-full font-medium">✓ Verified</span>
+          <span className="text-xs bg-white/10 text-white/80 px-2 py-1 rounded-full font-medium">
+            ✓ Verified
+          </span>
         </div>
       </div>
 
-      {/* Create post button */}
-<div
-  className="rounded-2xl p-4 border mb-4 shadow-sm transition-colors duration-300"
-  style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
->
-  <div className="flex items-center gap-3">
-    <Avatar
-      initials={(JSON.parse(localStorage.getItem("user") || "{}").username || "ME").slice(0, 2).toUpperCase()}
-      color="#7c3aed"
-      size={38}
-    />
-    <button
-      onClick={() => setCreatePost(true)}
-      className="flex-1 text-left px-4 py-2.5 rounded-full text-sm transition-colors duration-300"
-      style={{ backgroundColor: "var(--bg)", color: "var(--text-secondary)" }}
-    >
-      What's on your mind?
-    </button>
-  </div>
-</div>
+      {/* Create post box */}
+      <div
+        className="rounded-2xl p-4 border mb-4 shadow-sm transition-colors duration-300"
+        style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
+      >
+        <div className="flex items-center gap-3">
+          <Avatar
+            initials={(JSON.parse(localStorage.getItem("user") || "{}").username || "ME")
+              .slice(0, 2)
+              .toUpperCase()}
+            color="#7c3aed"
+            size={38}
+          />
+          <button
+            onClick={() => setCreatePost(true)}
+            className="flex-1 text-left px-4 py-2.5 rounded-full text-sm transition-colors duration-300"
+            style={{ backgroundColor: "var(--bg)", color: "var(--text-secondary)" }}
+          >
+            What's on your mind?
+          </button>
+        </div>
+      </div>
 
       {/* Posts */}
-      <div className="flex flex-col gap-4">
-        {posts.map((post, index) => (
-          <motion.div
-            key={post.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1, duration: 0.3, ease: "easeOut" }}
-            className="rounded-2xl p-4 shadow-sm border transition-colors duration-300"
-            style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <Avatar
-                initials={(post.full_name || post.username || "U").slice(0, 2).toUpperCase()}
-                color={post.avatar_color || "#007A3D"}
-                size={40}
-              />
-              <div className="flex-1">
-                <div className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>
-                  {post.full_name || post.username}
+      {posts.length === 0 ? (
+        <div className="text-center py-16" style={{ color: "var(--text-secondary)" }}>
+          <div className="text-4xl mb-3">📭</div>
+          <div className="font-bold text-base mb-1" style={{ color: "var(--text-primary)" }}>
+            No posts yet
+          </div>
+          <div className="text-sm">Be the first to post something!</div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {posts.map((post, index) => (
+            <motion.div
+              key={post.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1, duration: 0.3, ease: "easeOut" }}
+              className="rounded-2xl p-4 shadow-sm border transition-colors duration-300"
+              style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <Avatar
+                  initials={(post.full_name || post.username || "U")
+                    .slice(0, 2)
+                    .toUpperCase()}
+                  color={post.avatar_color || "#007A3D"}
+                  size={40}
+                />
+                <div className="flex-1">
+                  <div className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>
+                    {post.full_name || post.username}
+                  </div>
+                  <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                    {new Date(post.created_at).toLocaleDateString()}
+                  </div>
                 </div>
-                <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                  {new Date(post.created_at).toLocaleDateString()}
-                </div>
+                {post.tag && <Tag label={post.tag} />}
               </div>
-              {post.tag && <Tag label={post.tag} />}
-            </div>
 
-            <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--text-secondary)" }}>
-              {post.content}
-            </p>
+              <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--text-secondary)" }}>
+                {post.content}
+              </p>
 
-            <div className="flex gap-5 pt-3 border-t" style={{ borderColor: "var(--border)" }}>
-              <button
-                onClick={() => {
-                  toggleLike(post.id);
-                  const el = document.getElementById(`heart-${post.id}`);
-                  el.classList.remove("heart-bounce");
-                  void el.offsetWidth;
-                  el.classList.add("heart-bounce");
-                }}
-                className="flex items-center gap-1.5 text-sm font-semibold"
-                style={{ color: post.liked ? "#007A3D" : "var(--text-secondary)" }}
-              >
-                <span id={`heart-${post.id}`}>{post.liked ? "❤️" : "🤍"}</span>{" "}
-                {post.like_count}
-              </button>
+              <div className="flex gap-5 pt-3 border-t" style={{ borderColor: "var(--border)" }}>
+                <button
+                  onClick={() => {
+                    toggleLike(post.id);
+                    const el = document.getElementById(`heart-${post.id}`);
+                    el.classList.remove("heart-bounce");
+                    void el.offsetWidth;
+                    el.classList.add("heart-bounce");
+                  }}
+                  className="flex items-center gap-1.5 text-sm font-semibold"
+                  style={{ color: post.liked ? "#007A3D" : "var(--text-secondary)" }}
+                >
+                  <span id={`heart-${post.id}`}>{post.liked ? "❤️" : "🤍"}</span>{" "}
+                  {post.like_count}
+                </button>
 
-              <button
-                onClick={() => setActiveComments(post)}
-                className="flex items-center gap-1.5 text-sm font-semibold"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                💬 {post.comment_count}
-              </button>
+                <button
+                  onClick={() => setActiveComments(post)}
+                  className="flex items-center gap-1.5 text-sm font-semibold"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  💬 {post.comment_count}
+                </button>
 
-              <button
-                onClick={() => setActiveShare(post)}
-                className="flex items-center gap-1.5 text-sm font-semibold"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                ↗ Share
-              </button>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+                <button
+                  onClick={() => setActiveShare(post)}
+                  className="flex items-center gap-1.5 text-sm font-semibold"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  ↗ Share
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
 
       {/* Comments sheet */}
       <AnimatePresence>
@@ -479,14 +473,15 @@ export default function Feed() {
         )}
       </AnimatePresence>
 
+      {/* Create post sheet */}
       <AnimatePresence>
         {createPost && (
           <CreatePostSheet
             onClose={() => setCreatePost(false)}
             onPost={handleNewPost}
           />
-  )}
-</AnimatePresence>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
