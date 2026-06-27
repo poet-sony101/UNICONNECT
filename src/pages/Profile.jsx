@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import Avatar from "../components/layout/Avatar";
 import { useUser } from "../context/UserContext";
-import { AnimatePresence, motion } from "framer-motion";
+import API from "../utils/api";
 
 const styles = `
   @keyframes fadeUp {
@@ -10,24 +11,6 @@ const styles = `
   }
   .fade-up {
     animation: fadeUp 0.4s ease forwards;
-  }
-  .overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 40;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-  }
-  .sheet {
-    width: 100%;
-    max-width: 480px;
-    border-radius: 20px 20px 0 0;
-    padding: 24px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
   }
   .edit-input {
     width: 100%;
@@ -61,30 +44,55 @@ const RECENT_ACTIVITY = [
 
 function EditProfileSheet({ profile, onClose, onSave }) {
   const [form, setForm] = useState({ ...profile });
+  const [saving, setSaving] = useState(false);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await API.put("/users/me", {
+        full_name: form.name,
+        username: form.username,
+        bio: form.bio,
+        phone: form.phone,
+      });
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      localStorage.setItem("user", JSON.stringify({
+        ...user,
+        full_name: form.name,
+        username: form.username,
+      }));
+      onSave(form);
+      onClose();
+    } catch (err) {
+      console.error("Update error:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <div className="overlay" onClick={onClose}>
+    <div
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 40, display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+      onClick={onClose}
+    >
       <motion.div
-        className="sheet"
-        style={{ backgroundColor: "var(--card)" }}
+        style={{ width: "100%", maxWidth: 480, borderRadius: "20px 20px 0 0", padding: 24, display: "flex", flexDirection: "column", gap: 16, backgroundColor: "var(--card)" }}
         initial={{ y: 400 }}
         animate={{ y: 0 }}
         exit={{ y: 400 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Handle */}
         <div className="w-10 h-1 rounded-full bg-gray-300 mx-auto" />
 
         <div className="font-bold text-lg" style={{ color: "var(--text-primary)" }}>
           Edit Profile
         </div>
 
-        {/* Fields */}
         <div className="flex flex-col gap-3">
           <div>
             <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>
@@ -138,7 +146,6 @@ function EditProfileSheet({ profile, onClose, onSave }) {
           </div>
         </div>
 
-        {/* Buttons */}
         <div className="flex gap-3">
           <button
             onClick={onClose}
@@ -148,11 +155,12 @@ function EditProfileSheet({ profile, onClose, onSave }) {
             Cancel
           </button>
           <button
-            onClick={() => { onSave(form); onClose(); }}
+            onClick={handleSave}
+            disabled={saving}
             className="flex-1 py-3 rounded-xl font-bold text-sm text-white"
-            style={{ background: "linear-gradient(135deg, #007A3D, #4c1d95)" }}
+            style={{ background: "linear-gradient(135deg, #007A3D, #4c1d95)", cursor: saving ? "not-allowed" : "pointer" }}
           >
-            Save Changes
+            {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </motion.div>
@@ -163,12 +171,45 @@ function EditProfileSheet({ profile, onClose, onSave }) {
 export default function Profile() {
   const { department, faculty } = useUser();
   const [editOpen, setEditOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState({
-    name: "Your Name",
-    username: "@yourname",
+    name: "",
+    username: "",
     bio: "",
     phone: "",
   });
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await API.get("/users/me");
+        setProfile({
+          name: res.data.full_name || "",
+          username: res.data.username || "",
+          bio: res.data.bio || "",
+          phone: res.data.phone || "",
+        });
+      } catch (err) {
+        console.error("Profile fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="text-3xl mb-2">⏳</div>
+          <div className="text-sm" style={{ color: "var(--text-secondary)" }}>
+            Loading profile...
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pb-28">
@@ -190,7 +231,7 @@ export default function Profile() {
             className="w-20 h-20 rounded-2xl bg-purple-600 flex items-center justify-center text-white text-2xl font-extrabold border-4 shadow-lg fade-up"
             style={{ borderColor: "var(--bg)" }}
           >
-            {profile.name.slice(0, 2).toUpperCase()}
+            {(profile.name || profile.username || "ME").slice(0, 2).toUpperCase()}
           </div>
           <button
             onClick={() => setEditOpen(true)}
@@ -202,10 +243,10 @@ export default function Profile() {
         </div>
         <div className="fade-up">
           <div className="font-extrabold text-lg" style={{ color: "var(--text-primary)" }}>
-            {profile.name}
+            {profile.name || profile.username || "Your Name"}
           </div>
           <div className="text-sm mt-0.5" style={{ color: "var(--text-secondary)" }}>
-            {profile.username}
+            @{profile.username}
           </div>
           {profile.bio && (
             <div className="text-sm mt-1.5 leading-relaxed" style={{ color: "var(--text-secondary)" }}>
@@ -291,8 +332,14 @@ export default function Profile() {
       </div>
 
       {/* Sign out */}
-      <div className="px-5">
-        <button className="w-full py-3.5 rounded-2xl border border-red-100 bg-red-50 text-red-500 font-bold text-sm">
+      <div className="px-5 mt-2">
+        <button
+          onClick={() => {
+            localStorage.clear();
+            window.location.reload();
+          }}
+          className="w-full py-3.5 rounded-2xl border border-red-100 bg-red-50 text-red-500 font-bold text-sm"
+        >
           Sign Out
         </button>
       </div>
