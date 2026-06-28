@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Avatar from "../components/layout/Avatar";
 import Tag from "../components/layout/Tag";
 import { useUser } from "../context/UserContext";
@@ -47,12 +47,24 @@ const styles = `
   }
 `;
 
+const TAGS = ["All", "Admissions", "Department News", "Campus Life"];
+
+function timeAgo(dateStr) {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const diff = Math.floor((now - date) / 1000);
+  if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
 function CommentsSheet({ post, onClose, fetchComments, addComment }) {
   const [comments, setComments] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
 
-  useState(() => {
+  useEffect(() => {
     fetchComments(post.id).then((data) => {
       setComments(data);
       setLoading(false);
@@ -65,12 +77,7 @@ function CommentsSheet({ post, onClose, fetchComments, addComment }) {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     setComments((prev) => [
       ...prev,
-      {
-        id: Date.now(),
-        full_name: user.full_name || user.username,
-        username: user.username,
-        content: input,
-      },
+      { id: Date.now(), full_name: user.full_name || user.username, username: user.username, content: input },
     ]);
     setInput("");
   };
@@ -90,13 +97,8 @@ function CommentsSheet({ post, onClose, fetchComments, addComment }) {
         <div className="font-bold text-base mb-4" style={{ color: "var(--text-primary)" }}>
           Comments ({comments.length})
         </div>
-
         <div className="flex-1 overflow-y-auto flex flex-col gap-4 mb-4">
-          {loading && (
-            <div className="text-center py-8" style={{ color: "var(--text-secondary)" }}>
-              Loading...
-            </div>
-          )}
+          {loading && <div className="text-center py-8" style={{ color: "var(--text-secondary)" }}>Loading...</div>}
           {!loading && comments.length === 0 && (
             <div className="text-center py-8" style={{ color: "var(--text-secondary)" }}>
               <div className="text-3xl mb-2">💬</div>
@@ -105,23 +107,16 @@ function CommentsSheet({ post, onClose, fetchComments, addComment }) {
           )}
           {comments.map((c) => (
             <div key={c.id} className="flex gap-3">
-              <Avatar
-                initials={(c.username || "U").slice(0, 2).toUpperCase()}
-                color="#6366f1"
-                size={32}
-              />
+              <Avatar initials={(c.username || "U").slice(0, 2).toUpperCase()} color="#6366f1" size={32} />
               <div>
                 <div className="text-xs font-bold mb-0.5" style={{ color: "var(--text-primary)" }}>
                   {c.full_name || c.username}
                 </div>
-                <div className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                  {c.content}
-                </div>
+                <div className="text-sm" style={{ color: "var(--text-secondary)" }}>{c.content}</div>
               </div>
             </div>
           ))}
         </div>
-
         <div className="flex gap-2 items-center pt-3 border-t" style={{ borderColor: "var(--border)" }}>
           <input
             value={input}
@@ -133,9 +128,7 @@ function CommentsSheet({ post, onClose, fetchComments, addComment }) {
           <button
             onClick={submit}
             className="w-9 h-9 rounded-full bg-emerald-700 text-white flex items-center justify-center text-base font-bold"
-          >
-            ↑
-          </button>
+          >↑</button>
         </div>
       </motion.div>
     </div>
@@ -145,35 +138,11 @@ function CommentsSheet({ post, onClose, fetchComments, addComment }) {
 function ShareSheet({ post, onClose }) {
   const url = `https://uniconnect-sony.vercel.app`;
   const text = `Check this out on UniConnect: "${post.content.slice(0, 60)}..."`;
-
   const platforms = [
-    {
-      name: "WhatsApp",
-      icon: "💬",
-      color: "#25D366",
-      action: () => window.open(`https://wa.me/?text=${encodeURIComponent(text + " " + url)}`),
-    },
-    {
-      name: "Twitter / X",
-      icon: "🐦",
-      color: "#1DA1F2",
-      action: () => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`),
-    },
-    {
-      name: "Facebook",
-      icon: "📘",
-      color: "#1877F2",
-      action: () => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`),
-    },
-    {
-      name: "Copy Link",
-      icon: "🔗",
-      color: "#6b7280",
-      action: () => {
-        navigator.clipboard.writeText(url);
-        onClose();
-      },
-    },
+    { name: "WhatsApp", icon: "💬", color: "#25D366", action: () => window.open(`https://wa.me/?text=${encodeURIComponent(text + " " + url)}`) },
+    { name: "Twitter / X", icon: "🐦", color: "#1DA1F2", action: () => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`) },
+    { name: "Facebook", icon: "📘", color: "#1877F2", action: () => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`) },
+    { name: "Copy Link", icon: "🔗", color: "#6b7280", action: () => { navigator.clipboard.writeText(url); onClose(); } },
   ];
 
   return (
@@ -188,26 +157,14 @@ function ShareSheet({ post, onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-1 rounded-full bg-gray-300 mx-auto mb-4" />
-        <div className="font-bold text-base mb-5" style={{ color: "var(--text-primary)" }}>
-          Share Post
-        </div>
+        <div className="font-bold text-base mb-5" style={{ color: "var(--text-primary)" }}>Share Post</div>
         <div className="grid grid-cols-4 gap-3">
           {platforms.map((p) => (
-            <button
-              key={p.name}
-              onClick={p.action}
-              className="flex flex-col items-center gap-2"
-              style={{ background: "none", border: "none", cursor: "pointer" }}
-            >
-              <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
-                style={{ backgroundColor: p.color + "22", border: `1.5px solid ${p.color}33` }}
-              >
+            <button key={p.name} onClick={p.action} className="flex flex-col items-center gap-2" style={{ background: "none", border: "none", cursor: "pointer" }}>
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{ backgroundColor: p.color + "22", border: `1.5px solid ${p.color}33` }}>
                 {p.icon}
               </div>
-              <span className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
-                {p.name}
-              </span>
+              <span className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>{p.name}</span>
             </button>
           ))}
         </div>
@@ -247,26 +204,15 @@ function CreatePostSheet({ onClose, onPost }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-1 rounded-full bg-gray-300 mx-auto mb-4" />
-        <div className="font-bold text-base mb-4" style={{ color: "var(--text-primary)" }}>
-          Create Post
-        </div>
-
+        <div className="font-bold text-base mb-4" style={{ color: "var(--text-primary)" }}>Create Post</div>
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="What's on your mind?"
           rows={4}
           className="w-full rounded-2xl p-4 text-sm outline-none border transition-colors duration-300 mb-3"
-          style={{
-            backgroundColor: "var(--bg)",
-            borderColor: "var(--border)",
-            color: "var(--text-primary)",
-            resize: "none",
-            fontFamily: "inherit",
-          }}
+          style={{ backgroundColor: "var(--bg)", borderColor: "var(--border)", color: "var(--text-primary)", resize: "none", fontFamily: "inherit" }}
         />
-
-        {/* Tag selector */}
         <div className="flex gap-2 mb-4 flex-wrap">
           {["Admissions", "Department News", "Campus Life"].map((t) => (
             <button
@@ -284,15 +230,12 @@ function CreatePostSheet({ onClose, onPost }) {
             </button>
           ))}
         </div>
-
         <button
           onClick={submit}
           disabled={loading || !content.trim()}
           className="w-full py-3.5 rounded-xl font-bold text-sm text-white"
           style={{
-            background: loading || !content.trim()
-              ? "#2d3139"
-              : "linear-gradient(135deg, #007A3D, #4c1d95)",
+            background: loading || !content.trim() ? "#2d3139" : "linear-gradient(135deg, #007A3D, #4c1d95)",
             cursor: loading || !content.trim() ? "not-allowed" : "pointer",
           }}
         >
@@ -308,10 +251,18 @@ export default function Feed() {
   const [activeComments, setActiveComments] = useState(null);
   const [activeShare, setActiveShare] = useState(null);
   const { department } = useUser();
-  const { posts, loading, toggleLike, addComment, fetchComments } = useFeed();
+  const {
+    posts, loading, refreshing, hasMore,
+    activeTag, setActiveTag,
+    refresh, loadMore,
+    toggleLike, deletePost,
+    addComment, fetchComments,
+  } = useFeed();
 
-  const handleNewPost = () => {
-    window.location.reload();
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  const handleNewPost = (post) => {
+    refresh();
   };
 
   if (loading) {
@@ -319,9 +270,7 @@ export default function Feed() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="text-3xl mb-2">⏳</div>
-          <div className="text-sm" style={{ color: "var(--text-secondary)" }}>
-            Loading feed...
-          </div>
+          <div className="text-sm" style={{ color: "var(--text-secondary)" }}>Loading feed...</div>
         </div>
       </div>
     );
@@ -333,7 +282,7 @@ export default function Feed() {
 
       {/* Department badge */}
       <div
-        className="rounded-2xl px-4 py-3.5 flex items-center gap-3 mb-5 shadow-sm"
+        className="rounded-2xl px-4 py-3.5 flex items-center gap-3 mb-4 shadow-sm"
         style={{ background: "linear-gradient(135deg, #064e3b, #4c1d95)" }}
       >
         <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-xl">🎓</div>
@@ -342,10 +291,36 @@ export default function Feed() {
           <div className="text-xs text-white/60">UNILAG · Verified Student</div>
         </div>
         <div className="ml-auto">
-          <span className="text-xs bg-white/10 text-white/80 px-2 py-1 rounded-full font-medium">
-            ✓ Verified
-          </span>
+          <span className="text-xs bg-white/10 text-white/80 px-2 py-1 rounded-full font-medium">✓ Verified</span>
         </div>
+      </div>
+
+      {/* Tag filter */}
+      <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
+        {TAGS.map((t) => (
+          <button
+            key={t}
+            onClick={() => setActiveTag(t === "All" ? null : t)}
+            className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold border transition-colors duration-200"
+            style={{
+              backgroundColor: (t === "All" && !activeTag) || activeTag === t ? "#007A3D" : "var(--card)",
+              color: (t === "All" && !activeTag) || activeTag === t ? "#fff" : "var(--text-secondary)",
+              borderColor: (t === "All" && !activeTag) || activeTag === t ? "#007A3D" : "var(--border)",
+              cursor: "pointer",
+            }}
+          >
+            {t}
+          </button>
+        ))}
+
+        {/* Refresh button */}
+        <button
+          onClick={refresh}
+          className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold border transition-colors duration-200"
+          style={{ backgroundColor: "var(--card)", color: "var(--text-secondary)", borderColor: "var(--border)", cursor: "pointer" }}
+        >
+          {refreshing ? "⏳" : "🔄 Refresh"}
+        </button>
       </div>
 
       {/* Create post box */}
@@ -355,9 +330,7 @@ export default function Feed() {
       >
         <div className="flex items-center gap-3">
           <Avatar
-            initials={(JSON.parse(localStorage.getItem("user") || "{}").username || "ME")
-              .slice(0, 2)
-              .toUpperCase()}
+            initials={(user.username || "ME").slice(0, 2).toUpperCase()}
             color="#7c3aed"
             size={38}
           />
@@ -378,7 +351,9 @@ export default function Feed() {
           <div className="font-bold text-base mb-1" style={{ color: "var(--text-primary)" }}>
             No posts yet
           </div>
-          <div className="text-sm">Be the first to post something!</div>
+          <div className="text-sm">
+            {activeTag ? `No ${activeTag} posts yet` : "Be the first to post something!"}
+          </div>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
@@ -387,15 +362,13 @@ export default function Feed() {
               key={post.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.3, ease: "easeOut" }}
+              transition={{ delay: index * 0.05, duration: 0.3, ease: "easeOut" }}
               className="rounded-2xl p-4 shadow-sm border transition-colors duration-300"
               style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
             >
               <div className="flex items-center gap-3 mb-3">
                 <Avatar
-                  initials={(post.full_name || post.username || "U")
-                    .slice(0, 2)
-                    .toUpperCase()}
+                  initials={(post.full_name || post.username || "U").slice(0, 2).toUpperCase()}
                   color={post.avatar_color || "#007A3D"}
                   size={40}
                 />
@@ -404,10 +377,22 @@ export default function Feed() {
                     {post.full_name || post.username}
                   </div>
                   <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                    {new Date(post.created_at).toLocaleDateString()}
+                    {timeAgo(post.created_at)}
                   </div>
                 </div>
-                {post.tag && <Tag label={post.tag} />}
+                <div className="flex items-center gap-2">
+                  {post.tag && <Tag label={post.tag} />}
+                  {/* Delete button — only for own posts */}
+                  {post.author_id === user.id && (
+                    <button
+                      onClick={() => deletePost(post.id)}
+                      className="text-xs px-2 py-1 rounded-lg"
+                      style={{ color: "#ef4444", backgroundColor: "#fef2f2", border: "none", cursor: "pointer" }}
+                    >
+                      🗑
+                    </button>
+                  )}
+                </div>
               </div>
 
               <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--text-secondary)" }}>
@@ -429,7 +414,6 @@ export default function Feed() {
                   <span id={`heart-${post.id}`}>{post.liked ? "❤️" : "🤍"}</span>{" "}
                   {post.like_count}
                 </button>
-
                 <button
                   onClick={() => setActiveComments(post)}
                   className="flex items-center gap-1.5 text-sm font-semibold"
@@ -437,7 +421,6 @@ export default function Feed() {
                 >
                   💬 {post.comment_count}
                 </button>
-
                 <button
                   onClick={() => setActiveShare(post)}
                   className="flex items-center gap-1.5 text-sm font-semibold"
@@ -448,6 +431,17 @@ export default function Feed() {
               </div>
             </motion.div>
           ))}
+
+          {/* Load more */}
+          {hasMore && (
+            <button
+              onClick={loadMore}
+              className="w-full py-3 rounded-xl text-sm font-semibold border transition-colors duration-300"
+              style={{ backgroundColor: "var(--card)", borderColor: "var(--border)", color: "var(--text-secondary)", cursor: "pointer" }}
+            >
+              Load more posts
+            </button>
+          )}
         </div>
       )}
 
@@ -466,10 +460,7 @@ export default function Feed() {
       {/* Share sheet */}
       <AnimatePresence>
         {activeShare && (
-          <ShareSheet
-            post={activeShare}
-            onClose={() => setActiveShare(null)}
-          />
+          <ShareSheet post={activeShare} onClose={() => setActiveShare(null)} />
         )}
       </AnimatePresence>
 
