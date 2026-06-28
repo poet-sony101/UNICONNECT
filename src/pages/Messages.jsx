@@ -251,6 +251,31 @@ export default function Messages({ dmList, setDmList }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [inboxLoading, setInboxLoading] = useState(true);
+
+  // Load real inbox on mount
+  useEffect(() => {
+    const fetchInbox = async () => {
+      try {
+        const res = await API.get("/messages/inbox");
+        const formatted = res.data.map((dm) => ({
+          id: dm.other_user,
+          name: dm.full_name || dm.username,
+          avatar: (dm.full_name || dm.username || "U").slice(0, 2).toUpperCase(),
+          department: dm.department,
+          lastMsg: dm.last_message,
+          time: new Date(dm.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          unread: parseInt(dm.unread_count) || 0,
+        }));
+        setDmList(formatted);
+      } catch (err) {
+        console.error("Inbox fetch error:", err);
+      } finally {
+        setInboxLoading(false);
+      }
+    };
+    fetchInbox();
+  }, []);
 
   const updateLastMsg = (id, msg, time) => {
     setDmList((prev) =>
@@ -316,12 +341,10 @@ export default function Messages({ dmList, setDmList }) {
           <input
             value={searchQuery}
             onChange={(e) => searchUsers(e.target.value)}
-            placeholder="Search by name or username..."
+            placeholder="Search by name, username or email..."
             className="search-input"
             autoFocus
           />
-
-          {/* Search results */}
           {searchLoading && (
             <div className="text-center py-4 text-sm" style={{ color: "var(--text-secondary)" }}>
               Searching...
@@ -370,7 +393,14 @@ export default function Messages({ dmList, setDmList }) {
       )}
 
       {/* DM List */}
-      {dmList.length === 0 && !searching ? (
+      {inboxLoading ? (
+        <div className="flex items-center justify-center h-40">
+          <div className="text-center">
+            <div className="text-3xl mb-2">⏳</div>
+            <div className="text-sm" style={{ color: "var(--text-secondary)" }}>Loading messages...</div>
+          </div>
+        </div>
+      ) : dmList.length === 0 && !searching ? (
         <div className="text-center py-16" style={{ color: "var(--text-secondary)" }}>
           <div className="text-4xl mb-3">💬</div>
           <div className="font-bold text-base mb-1" style={{ color: "var(--text-primary)" }}>
