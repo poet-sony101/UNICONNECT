@@ -384,13 +384,19 @@ export default function Feed() {
                   {post.tag && <Tag label={post.tag} />}
                   {/* Delete button — only for own posts */}
                   {post.author_id === user.id && (
-                    <button
-                      onClick={() => deletePost(post.id)}
-                      className="text-xs px-2 py-1 rounded-lg"
-                      style={{ color: "#ef4444", backgroundColor: "#fef2f2", border: "none", cursor: "pointer" }}
-                    >
-                      🗑
-                    </button>
+  <button
+    onClick={() => deletePost(post.id)}
+    disabled={post.deleting}
+    className="text-xs px-2 py-1 rounded-lg transition-all"
+    style={{
+      color: post.deleting ? "#9ca3af" : "#ef4444",
+      backgroundColor: post.deleting ? "#f3f4f6" : "#fef2f2",
+      border: "none",
+      cursor: post.deleting ? "not-allowed" : "pointer",
+    }}
+  >
+    {post.deleting ? "⏳" : "🗑"}
+  </button>
                   )}
                 </div>
               </div>

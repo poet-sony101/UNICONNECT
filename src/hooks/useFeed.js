@@ -62,13 +62,19 @@ export default function useFeed() {
   };
 
   const deletePost = async (postId) => {
-    try {
-      await API.delete(`/posts/${postId}`);
-      setPosts((prev) => prev.filter((p) => p.id !== postId));
-    } catch (err) {
-      console.error("Delete error:", err);
-    }
-  };
+  try {
+    setPosts((prev) =>
+      prev.map((p) => (p.id === postId ? { ...p, deleting: true } : p))
+    );
+    await API.delete(`/posts/${postId}`);
+    setPosts((prev) => prev.filter((p) => p.id !== postId));
+  } catch (err) {
+    console.error("Delete error:", err);
+    setPosts((prev) =>
+      prev.map((p) => (p.id === postId ? { ...p, deleting: false } : p))
+    );
+  }
+};
 
   const addComment = async (postId, content) => {
     try {
