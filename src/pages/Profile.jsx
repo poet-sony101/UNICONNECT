@@ -711,16 +711,25 @@ export default function Profile() {
         </button>
       </div>
 
-      {/* Edit Profile Sheet */}
-      <AnimatePresence>
-        {editOpen && (
-          <EditProfileSheet
-            profile={profile}
-            onClose={() => setEditOpen(false)}
-            onSave={(updated) => setProfile((prev) => ({ ...prev, ...updated }))}
-          />
-        )}
-      </AnimatePresence>
+      {/* Section tabs */}
+        <div className="flex rounded-xl overflow-hidden border" style={{ borderColor: "var(--border)" }}>
+        {["basic", "social", "password"].map((s) => (
+    <button key={s} onClick={() => setActiveSection(s)} style={{
+        flex: 1,
+        padding: "10px",
+        fontSize: 13,
+        fontWeight: 600,
+        border: "none",
+        cursor: "pointer",
+        fontFamily: "inherit",
+        backgroundColor: activeSection === s ? "#007A3D" : "var(--bg)",
+        color: activeSection === s ? "#fff" : "var(--text-secondary)",
+      }}
+    >
+      {s === "basic" ? "Basic" : s === "social" ? "Social" : "Password"}
+    </button>
+  ))}
+</div>
 
       {/* Notification Settings */}
       <AnimatePresence>
