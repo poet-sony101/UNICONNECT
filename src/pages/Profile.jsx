@@ -65,27 +65,28 @@ function EditProfileSheet({ profile, onClose, onSave }) {
         <div className="font-bold text-lg" style={{ color: "var(--text-primary)" }}>Edit Profile</div>
 
         {/* Section tabs */}
-        <div className="flex rounded-xl overflow-hidden border" style={{ borderColor: "var(--border)" }}>
-          {["basic", "social", "password"].map((s) => (
-            <button
-              key={s}
-              onClick={() => setActiveSection(s)}
-              style={{
-                flex: 1,
-                padding: "10px",
-                fontSize: 13,
-                fontWeight: 600,
-                border: "none",
-                cursor: "pointer",
-                fontFamily: "inherit",
-                backgroundColor: activeSection === s ? "#007A3D" : "var(--bg)",
-                color: activeSection === s ? "#fff" : "var(--text-secondary)",
-              }}
-            >
-              {s === "basic" ? "Basic" : s === "social" ? "Social" : "Password"}
-            </button>
-          ))}
-        </div>
+<div style={{ display: "flex", borderRadius: 12, overflow: "hidden", border: "1.5px solid var(--border)" }}>
+  {["basic", "social", "password"].map((s) => (
+    <button
+      key={s}
+      onClick={() => setActiveSection(s)}
+      style={{
+        flex: 1,
+        padding: "10px 0",
+        fontSize: 13,
+        fontWeight: 600,
+        border: "none",
+        cursor: "pointer",
+        fontFamily: "inherit",
+        backgroundColor: activeSection === s ? "#007A3D" : "var(--bg)",
+        color: activeSection === s ? "#fff" : "var(--text-secondary)",
+        transition: "all 0.2s",
+      }}
+    >
+      {s === "basic" ? "Basic" : s === "social" ? "Social" : "Password"}
+    </button>
+  ))}
+</div>
 
         {/* Basic info */}
         {activeSection === "basic" && (
