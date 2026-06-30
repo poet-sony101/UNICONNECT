@@ -4,26 +4,6 @@ import Avatar from "../components/layout/Avatar";
 import { useUser } from "../context/UserContext";
 import API from "../utils/api";
 
-const styles = `
-  @keykami fadeUp {
-    0% { opacity: 0; transform: translateY(20px); }
-    100% { opacity: 1; transform: translateY(0); }
-  }
-  .fade-up { animation: fadeUp 0.4s ease forwards; }
-  .edit-input {
-    width: 100%; padding: 12px 16px; border-radius: 12px;
-    border: 1.5px solid var(--border); background: var(--bg);
-    color: var(--text-primary); font-size: 14px; outline: none;
-    font-family: inherit; transition: border-color 0.2s;
-  }
-  .edit-input:focus { border-color: #007A3D; }
-  .tab-btn {
-    flex: 1; padding: 10px; font-size: 13px; font-weight: 600;
-    border: none; cursor: pointer; transition: all 0.2s;
-    font-family: inherit;
-  }
-`;
-
 function timeAgo(dateStr) {
   if (!dateStr) return "";
   const now = new Date();
@@ -89,9 +69,15 @@ function EditProfileSheet({ profile, onClose, onSave }) {
           {["basic", "social", "password"].map((s) => (
             <button
               key={s}
-              className="tab-btn"
               onClick={() => setActiveSection(s)}
               style={{
+                flex: 1,
+                padding: "10px",
+                fontSize: 13,
+                fontWeight: 600,
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "inherit",
                 backgroundColor: activeSection === s ? "#007A3D" : "var(--bg)",
                 color: activeSection === s ? "#fff" : "var(--text-secondary)",
               }}
@@ -106,23 +92,33 @@ function EditProfileSheet({ profile, onClose, onSave }) {
           <div className="flex flex-col gap-3">
             <div>
               <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>Full Name</label>
-              <input name="name" value={form.name} onChange={handleChange} placeholder="Your full name" className="edit-input" />
+              <input name="name" value={form.name} onChange={handleChange} placeholder="Your full name"
+                style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "1.5px solid var(--border)", background: "var(--bg)", color: "var(--text-primary)", fontSize: 14, outline: "none", fontFamily: "inherit" }}
+              />
             </div>
             <div>
               <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>Username</label>
-              <input name="username" value={form.username} onChange={handleChange} placeholder="@username" className="edit-input" />
+              <input name="username" value={form.username} onChange={handleChange} placeholder="@username"
+                style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "1.5px solid var(--border)", background: "var(--bg)", color: "var(--text-primary)", fontSize: 14, outline: "none", fontFamily: "inherit" }}
+              />
             </div>
             <div>
               <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>Bio</label>
-              <textarea name="bio" value={form.bio} onChange={handleChange} placeholder="Tell your coursemates about yourself..." rows={3} className="edit-input" style={{ resize: "none" }} />
+              <textarea name="bio" value={form.bio} onChange={handleChange} placeholder="Tell your coursemates about yourself..." rows={3}
+                style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "1.5px solid var(--border)", background: "var(--bg)", color: "var(--text-primary)", fontSize: 14, outline: "none", fontFamily: "inherit", resize: "none" }}
+              />
             </div>
             <div>
               <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>Phone Number</label>
-              <input name="phone" value={form.phone} onChange={handleChange} placeholder="+234 000 000 0000" className="edit-input" />
+              <input name="phone" value={form.phone} onChange={handleChange} placeholder="+234 000 000 0000"
+                style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "1.5px solid var(--border)", background: "var(--bg)", color: "var(--text-primary)", fontSize: 14, outline: "none", fontFamily: "inherit" }}
+              />
             </div>
             <div>
               <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>Level</label>
-              <select name="level" value={form.level} onChange={handleChange} className="edit-input">
+              <select name="level" value={form.level} onChange={handleChange}
+                style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "1.5px solid var(--border)", background: "var(--bg)", color: "var(--text-primary)", fontSize: 14, outline: "none", fontFamily: "inherit" }}
+              >
                 {["100L", "200L", "300L", "400L", "500L", "600L"].map((l) => (
                   <option key={l} value={l}>{l}</option>
                 ))}
@@ -130,7 +126,9 @@ function EditProfileSheet({ profile, onClose, onSave }) {
             </div>
             <div>
               <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>Graduation Year</label>
-              <input name="graduation_year" type="number" value={form.graduation_year} onChange={handleChange} placeholder="e.g. 2028" className="edit-input" />
+              <input name="graduation_year" type="number" value={form.graduation_year} onChange={handleChange} placeholder="e.g. 2028"
+                style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "1.5px solid var(--border)", background: "var(--bg)", color: "var(--text-primary)", fontSize: 14, outline: "none", fontFamily: "inherit" }}
+              />
             </div>
           </div>
         )}
@@ -140,11 +138,15 @@ function EditProfileSheet({ profile, onClose, onSave }) {
           <div className="flex flex-col gap-3">
             <div>
               <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>Twitter / X</label>
-              <input name="twitter" value={form.twitter || ""} onChange={handleChange} placeholder="@yourtwitter" className="edit-input" />
+              <input name="twitter" value={form.twitter || ""} onChange={handleChange} placeholder="@yourtwitter"
+                style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "1.5px solid var(--border)", background: "var(--bg)", color: "var(--text-primary)", fontSize: 14, outline: "none", fontFamily: "inherit" }}
+              />
             </div>
             <div>
               <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>Instagram</label>
-              <input name="instagram" value={form.instagram || ""} onChange={handleChange} placeholder="@yourinstagram" className="edit-input" />
+              <input name="instagram" value={form.instagram || ""} onChange={handleChange} placeholder="@yourinstagram"
+                style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "1.5px solid var(--border)", background: "var(--bg)", color: "var(--text-primary)", fontSize: 14, outline: "none", fontFamily: "inherit" }}
+              />
             </div>
           </div>
         )}
@@ -158,16 +160,14 @@ function EditProfileSheet({ profile, onClose, onSave }) {
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 py-3 rounded-xl border font-semibold text-sm"
-              style={{ borderColor: "var(--border)", color: "var(--text-secondary)", backgroundColor: "var(--bg)" }}
+              style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1.5px solid var(--border)", color: "var(--text-secondary)", backgroundColor: "var(--bg)", fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 py-3 rounded-xl font-bold text-sm text-white"
-              style={{ background: "linear-gradient(135deg, #007A3D, #4c1d95)", cursor: saving ? "not-allowed" : "pointer" }}
+              style={{ flex: 1, padding: "12px", borderRadius: 12, border: "none", color: "#fff", background: "linear-gradient(135deg, #007A3D, #4c1d95)", fontWeight: 700, fontSize: 14, cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit" }}
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>
@@ -187,21 +187,12 @@ function ChangePasswordSection({ onClose }) {
   const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSave = async () => {
-    if (form.newPassword !== form.confirmPassword) {
-      setError("New passwords don't match");
-      return;
-    }
-    if (form.newPassword.length < 6) {
-      setError("Password must be at least 6 characters");
-      return;
-    }
+    if (form.newPassword !== form.confirmPassword) { setError("New passwords don't match"); return; }
+    if (form.newPassword.length < 6) { setError("Password must be at least 6 characters"); return; }
     setSaving(true);
     setError("");
     try {
-      await API.put("/users/me/password", {
-        currentPassword: form.currentPassword,
-        newPassword: form.newPassword,
-      });
+      await API.put("/users/me/password", { currentPassword: form.currentPassword, newPassword: form.newPassword });
       setSuccess(true);
       setTimeout(onClose, 1500);
     } catch (err) {
@@ -210,6 +201,8 @@ function ChangePasswordSection({ onClose }) {
       setSaving(false);
     }
   };
+
+  const inputStyle = { width: "100%", padding: "12px 16px", borderRadius: 12, border: "1.5px solid var(--border)", background: "var(--bg)", color: "var(--text-primary)", fontSize: 14, outline: "none", fontFamily: "inherit" };
 
   return (
     <div className="flex flex-col gap-3">
@@ -221,27 +214,24 @@ function ChangePasswordSection({ onClose }) {
       ) : (
         <>
           {error && (
-            <div className="px-4 py-2.5 rounded-xl text-sm font-medium" style={{ backgroundColor: "#fef2f2", color: "#ef4444" }}>
-              ⚠️ {error}
-            </div>
+            <div className="px-4 py-2.5 rounded-xl text-sm font-medium" style={{ backgroundColor: "#fef2f2", color: "#ef4444" }}>⚠️ {error}</div>
           )}
           <div>
             <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>Current Password</label>
-            <input name="currentPassword" type="password" value={form.currentPassword} onChange={handleChange} placeholder="••••••••" className="edit-input" />
+            <input name="currentPassword" type="password" value={form.currentPassword} onChange={handleChange} placeholder="••••••••" style={inputStyle} />
           </div>
           <div>
             <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>New Password</label>
-            <input name="newPassword" type="password" value={form.newPassword} onChange={handleChange} placeholder="••••••••" className="edit-input" />
+            <input name="newPassword" type="password" value={form.newPassword} onChange={handleChange} placeholder="••••••••" style={inputStyle} />
           </div>
           <div>
             <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>Confirm New Password</label>
-            <input name="confirmPassword" type="password" value={form.confirmPassword} onChange={handleChange} placeholder="••••••••" className="edit-input" />
+            <input name="confirmPassword" type="password" value={form.confirmPassword} onChange={handleChange} placeholder="••••••••" style={inputStyle} />
           </div>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="w-full py-3 rounded-xl font-bold text-sm text-white"
-            style={{ background: "linear-gradient(135deg, #007A3D, #4c1d95)", cursor: saving ? "not-allowed" : "pointer" }}
+            style={{ width: "100%", padding: "12px", borderRadius: 12, border: "none", color: "#fff", background: "linear-gradient(135deg, #007A3D, #4c1d95)", fontWeight: 700, fontSize: 14, cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit" }}
           >
             {saving ? "Updating..." : "Update Password"}
           </button>
@@ -312,7 +302,7 @@ function NotificationSettings({ onClose }) {
             {ITEMS.map((item) => (
               <div
                 key={item.key}
-                className="flex items-center gap-3 px-4 py-3.5 rounded-2xl border transition-colors duration-300"
+                className="flex items-center gap-3 px-4 py-3.5 rounded-2xl border"
                 style={{ backgroundColor: "var(--bg)", borderColor: "var(--border)" }}
               >
                 <span className="text-xl">{item.icon}</span>
@@ -322,12 +312,10 @@ function NotificationSettings({ onClose }) {
                 </div>
                 <button
                   onClick={() => toggle(item.key)}
-                  className="w-12 h-6 rounded-full transition-all duration-300 relative"
-                  style={{ backgroundColor: settings[item.key] ? "#007A3D" : "#d1d5db", border: "none", cursor: "pointer" }}
+                  style={{ width: 48, height: 24, borderRadius: 12, backgroundColor: settings[item.key] ? "#007A3D" : "#d1d5db", border: "none", cursor: "pointer", position: "relative" }}
                 >
                   <div
-                    className="absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300"
-                    style={{ left: settings[item.key] ? "calc(100% - 20px)" : "4px" }}
+                    style={{ position: "absolute", top: 4, width: 16, height: 16, borderRadius: "50%", backgroundColor: "#fff", transition: "left 0.3s", left: settings[item.key] ? "calc(100% - 20px)" : 4 }}
                   />
                 </button>
               </div>
@@ -338,8 +326,7 @@ function NotificationSettings({ onClose }) {
         <button
           onClick={save}
           disabled={saving}
-          className="w-full py-3.5 rounded-xl font-bold text-sm text-white mt-5"
-          style={{ background: "linear-gradient(135deg, #007A3D, #4c1d95)", cursor: saving ? "not-allowed" : "pointer" }}
+          style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", color: "#fff", background: "linear-gradient(135deg, #007A3D, #4c1d95)", fontWeight: 700, fontSize: 14, cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit", marginTop: 20 }}
         >
           {saving ? "Saving..." : "Save Settings"}
         </button>
@@ -457,7 +444,6 @@ export default function Profile() {
 
   return (
     <div className="pb-28">
-      <style>{`@keyframes fadeUp { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } } .fade-up { animation: fadeUp 0.4s ease forwards; } .edit-input { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--bg); color: var(--text-primary); font-size: 14px; outline: none; font-family: inherit; transition: border-color 0.2s; } .edit-input:focus { border-color: #007A3D; } .tab-btn { flex: 1; padding: 10px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; font-family: inherit; }`}</style>
 
       {/* Cover photo */}
       <div
@@ -480,20 +466,11 @@ export default function Profile() {
       {/* Avatar + name */}
       <div className="px-5 pb-4 border-b transition-colors duration-300" style={{ borderColor: "var(--border)" }}>
         <div className="flex items-end justify-between -mt-10 mb-3">
-          {/* Avatar */}
           <div className="relative cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
             {profile.avatar_url ? (
-              <img
-                src={profile.avatar_url}
-                alt="avatar"
-                className="w-20 h-20 rounded-2xl object-cover border-4 shadow-lg fade-up"
-                style={{ borderColor: "var(--bg)" }}
-              />
+              <img src={profile.avatar_url} alt="avatar" className="w-20 h-20 rounded-2xl object-cover border-4 shadow-lg" style={{ borderColor: "var(--bg)" }} />
             ) : (
-              <div
-                className="w-20 h-20 rounded-2xl bg-purple-600 flex items-center justify-center text-white text-2xl font-extrabold border-4 shadow-lg fade-up"
-                style={{ borderColor: "var(--bg)" }}
-              >
+              <div className="w-20 h-20 rounded-2xl bg-purple-600 flex items-center justify-center text-white text-2xl font-extrabold border-4 shadow-lg" style={{ borderColor: "var(--bg)" }}>
                 {initials}
               </div>
             )}
@@ -506,22 +483,18 @@ export default function Profile() {
           <div className="flex gap-2">
             <button
               onClick={() => setNotifOpen(true)}
-              className="px-3 py-2 rounded-xl border text-sm font-semibold shadow-sm transition-colors duration-300"
+              className="px-3 py-2 rounded-xl border text-sm font-semibold shadow-sm"
               style={{ borderColor: "var(--border)", color: "var(--text-primary)", backgroundColor: "var(--card)" }}
-            >
-              🔔
-            </button>
+            >🔔</button>
             <button
               onClick={() => setEditOpen(true)}
-              className="px-4 py-2 rounded-xl border text-sm font-semibold shadow-sm transition-colors duration-300"
+              className="px-4 py-2 rounded-xl border text-sm font-semibold shadow-sm"
               style={{ borderColor: "var(--border)", color: "var(--text-primary)", backgroundColor: "var(--card)" }}
-            >
-              Edit Profile
-            </button>
+            >Edit Profile</button>
           </div>
         </div>
 
-        <div className="fade-up">
+        <div>
           <div className="font-extrabold text-lg" style={{ color: "var(--text-primary)" }}>
             {profile.name || profile.username || "Your Name"}
           </div>
@@ -533,19 +506,15 @@ export default function Profile() {
             {department} · {profile.level} · {faculty}
             {profile.graduation_year && ` · Class of ${profile.graduation_year}`}
           </div>
-
-          {/* Social links */}
           {(profile.twitter || profile.instagram) && (
             <div className="flex gap-3 mt-2">
               {profile.twitter && (
-                <a href={`https://twitter.com/${profile.twitter.replace("@", "")}`} target="_blank" rel="noreferrer"
-                  className="text-xs font-semibold text-blue-400">
+                <a href={`https://twitter.com/${profile.twitter.replace("@", "")}`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-blue-400">
                   🐦 {profile.twitter}
                 </a>
               )}
               {profile.instagram && (
-                <a href={`https://instagram.com/${profile.instagram.replace("@", "")}`} target="_blank" rel="noreferrer"
-                  className="text-xs font-semibold text-pink-400">
+                <a href={`https://instagram.com/${profile.instagram.replace("@", "")}`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-pink-400">
                   📸 {profile.instagram}
                 </a>
               )}
@@ -555,10 +524,7 @@ export default function Profile() {
       </div>
 
       {/* Stats */}
-      <div
-        className="grid grid-cols-3 divide-x border-b transition-colors duration-300"
-        style={{ borderColor: "var(--border)", backgroundColor: "var(--card)" }}
-      >
+      <div className="grid grid-cols-3 divide-x border-b" style={{ borderColor: "var(--border)", backgroundColor: "var(--card)" }}>
         {[
           { label: "Posts", value: profile.post_count },
           { label: "Friends", value: profile.friend_count },
@@ -572,11 +538,8 @@ export default function Profile() {
       </div>
 
       {/* Verified badge */}
-      <div className="px-5 py-4 border-b transition-colors duration-300" style={{ borderColor: "var(--border)" }}>
-        <div
-          className="rounded-2xl px-4 py-3.5 flex items-center gap-3"
-          style={{ background: "linear-gradient(135deg, #064e3b, #4c1d95)" }}
-        >
+      <div className="px-5 py-4 border-b" style={{ borderColor: "var(--border)" }}>
+        <div className="rounded-2xl px-4 py-3.5 flex items-center gap-3" style={{ background: "linear-gradient(135deg, #064e3b, #4c1d95)" }}>
           <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-lg">🎓</div>
           <div>
             <div className="text-sm font-bold text-white">UNILAG Verified Student</div>
@@ -587,10 +550,7 @@ export default function Profile() {
       </div>
 
       {/* Tabs */}
-      <div
-        className="flex border-b transition-colors duration-300"
-        style={{ borderColor: "var(--border)", backgroundColor: "var(--card)" }}
-      >
+      <div className="flex border-b" style={{ borderColor: "var(--border)", backgroundColor: "var(--card)" }}>
         {[
           { id: "activity", label: "Activity" },
           { id: "posts", label: `Posts (${profile.post_count})` },
@@ -599,8 +559,9 @@ export default function Profile() {
           <button
             key={t.id}
             onClick={() => setActiveTab(t.id)}
-            className="tab-btn"
             style={{
+              flex: 1, padding: "10px", fontSize: 13, fontWeight: 600,
+              border: "none", cursor: "pointer", fontFamily: "inherit",
               backgroundColor: "transparent",
               color: activeTab === t.id ? "#007A3D" : "var(--text-secondary)",
               borderBottom: activeTab === t.id ? "2px solid #007A3D" : "2px solid transparent",
@@ -613,7 +574,6 @@ export default function Profile() {
 
       {/* Tab content */}
       <div className="px-5 py-4">
-        {/* Activity tab */}
         {activeTab === "activity" && (
           <div className="flex flex-col gap-3">
             {activity.length === 0 ? (
@@ -623,11 +583,7 @@ export default function Profile() {
               </div>
             ) : (
               activity.map((item) => (
-                <div
-                  key={item.id}
-                  className="rounded-2xl px-4 py-3.5 border flex items-center gap-3 shadow-sm"
-                  style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
-                >
+                <div key={item.id} className="rounded-2xl px-4 py-3.5 border flex items-center gap-3 shadow-sm" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg border" style={{ backgroundColor: "var(--bg)", borderColor: "var(--border)" }}>
                     {item.type === "like" ? "❤️" : item.type === "comment" ? "💬" : item.type === "join" ? "👥" : "✅"}
                   </div>
@@ -641,7 +597,6 @@ export default function Profile() {
           </div>
         )}
 
-        {/* Posts tab */}
         {activeTab === "posts" && (
           <div className="flex flex-col gap-3">
             {myPosts.length === 0 ? (
@@ -651,11 +606,7 @@ export default function Profile() {
               </div>
             ) : (
               myPosts.map((post) => (
-                <div
-                  key={post.id}
-                  className="rounded-2xl p-4 border shadow-sm"
-                  style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
-                >
+                <div key={post.id} className="rounded-2xl p-4 border shadow-sm" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
                   <p className="text-sm leading-relaxed mb-2" style={{ color: "var(--text-primary)" }}>{post.content}</p>
                   <div className="flex gap-4 text-xs" style={{ color: "var(--text-secondary)" }}>
                     <span>❤️ {post.like_count}</span>
@@ -668,7 +619,6 @@ export default function Profile() {
           </div>
         )}
 
-        {/* Friends tab */}
         {activeTab === "friends" && (
           <div className="flex flex-col gap-3">
             {friends.length === 0 ? (
@@ -678,11 +628,7 @@ export default function Profile() {
               </div>
             ) : (
               friends.map((f) => (
-                <div
-                  key={f.id}
-                  className="rounded-2xl px-4 py-3.5 border flex items-center gap-3"
-                  style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
-                >
+                <div key={f.id} className="rounded-2xl px-4 py-3.5 border flex items-center gap-3" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
                   {f.avatar_url ? (
                     <img src={f.avatar_url} alt="avatar" className="w-10 h-10 rounded-xl object-cover" />
                   ) : (
@@ -703,33 +649,24 @@ export default function Profile() {
       <div className="px-5 mt-2">
         <button
           onClick={() => { localStorage.clear(); window.location.reload(); }}
-          onMouseEnter={(e) => { e.target.style.backgroundColor = "#fee2e2"; e.target.style.borderColor = "#fca5a5"; }}
-          onMouseLeave={(e) => { e.target.style.backgroundColor = "#fef2f2"; e.target.style.borderColor = "#fee2e2"; }}
-          className="w-full py-3.5 rounded-2xl border border-red-100 bg-red-50 text-red-500 font-bold text-sm cursor-pointer transition-all duration-200"
+          onMouseEnter={(e) => { e.target.style.backgroundColor = "#fee2e2"; }}
+          onMouseLeave={(e) => { e.target.style.backgroundColor = "#fef2f2"; }}
+          style={{ width: "100%", padding: "14px", borderRadius: 16, border: "1px solid #fee2e2", backgroundColor: "#fef2f2", color: "#ef4444", fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}
         >
           Sign Out
         </button>
       </div>
 
-      {/* Section tabs */}
-        <div className="flex rounded-xl overflow-hidden border" style={{ borderColor: "var(--border)" }}>
-        {["basic", "social", "password"].map((s) => (
-    <button key={s} onClick={() => setActiveSection(s)} style={{
-        flex: 1,
-        padding: "10px",
-        fontSize: 13,
-        fontWeight: 600,
-        border: "none",
-        cursor: "pointer",
-        fontFamily: "inherit",
-        backgroundColor: activeSection === s ? "#007A3D" : "var(--bg)",
-        color: activeSection === s ? "#fff" : "var(--text-secondary)",
-      }}
-    >
-      {s === "basic" ? "Basic" : s === "social" ? "Social" : "Password"}
-    </button>
-  ))}
-</div>
+      {/* Edit Profile Sheet */}
+      <AnimatePresence>
+        {editOpen && (
+          <EditProfileSheet
+            profile={profile}
+            onClose={() => setEditOpen(false)}
+            onSave={(updated) => setProfile((prev) => ({ ...prev, ...updated }))}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Notification Settings */}
       <AnimatePresence>
