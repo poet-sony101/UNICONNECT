@@ -18,7 +18,10 @@ function timeAgo(dateStr) {
 function EditProfileSheet({ profile, onClose, onSave }) {
   const [form, setForm] = useState({ ...profile });
   const [saving, setSaving] = useState(false);
-  const [activeSection, setActiveSection] = useState("basic");
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
@@ -48,13 +51,46 @@ function EditProfileSheet({ profile, onClose, onSave }) {
     }
   };
 
+  const handlePasswordSave = async () => {
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError("Passwords don't match");
+      return;
+    }
+    if (passwordForm.newPassword.length < 6) {
+      setPasswordError("Password must be at least 6 characters");
+      return;
+    }
+    setChangingPassword(true);
+    setPasswordError("");
+    try {
+      await API.put("/users/me/password", {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      });
+      setPasswordSuccess(true);
+    } catch (err) {
+      setPasswordError(err.response?.data?.message || "Failed to update password");
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const inputStyle = {
+    width: "100%", padding: "12px 16px", borderRadius: 12,
+    border: "1.5px solid var(--border)", background: "var(--bg)",
+    color: "var(--text-primary)", fontSize: 14, outline: "none", fontFamily: "inherit",
+  };
+
+  const labelStyle = { fontSize: 11, fontWeight: 600, color: "var(--text-secondary)", display: "block", marginBottom: 6 };
+  const sectionStyle = { fontSize: 13, fontWeight: 700, color: "var(--text-primary)", marginBottom: 12, marginTop: 8, paddingBottom: 8, borderBottom: "1px solid var(--border)" };
+
   return (
     <div
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 40, display: "flex", alignItems: "flex-end", justifyContent: "center" }}
       onClick={onClose}
     >
       <motion.div
-        style={{ width: "100%", maxWidth: 480, borderRadius: "20px 20px 0 0", padding: 24, maxHeight: "85vh", overflowY: "auto", backgroundColor: "var(--card)", display: "flex", flexDirection: "column", gap: 16 }}
+        style={{ width: "100%", maxWidth: 480, borderRadius: "20px 20px 0 0", padding: 24, maxHeight: "90vh", overflowY: "auto", backgroundColor: "var(--card)", display: "flex", flexDirection: "column", gap: 14 }}
         initial={{ y: 400 }}
         animate={{ y: 0 }}
         exit={{ y: 400 }}
@@ -62,121 +98,126 @@ function EditProfileSheet({ profile, onClose, onSave }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-1 rounded-full bg-gray-300 mx-auto" />
-        <div className="font-bold text-lg" style={{ color: "var(--text-primary)" }}>Edit Profile</div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: "var(--text-primary)" }}>Edit Profile</div>
 
-      {/* Section tabs */}
-<div style={{ display: "flex", borderRadius: 12, overflow: "hidden", border: "1.5px solid var(--border)" }}>
-  {["basic", "social", "password"].map((s) => (
-    <button
-      key={s}
-      onClick={(e) => {
-        e.stopPropagation();
-        setActiveSection(s);
-      }}
-      style={{
-        flex: 1,
-        padding: "10px 0",
-        fontSize: 13,
-        fontWeight: 600,
-        border: "none",
-        cursor: "pointer",
-        fontFamily: "inherit",
-        backgroundColor: activeSection === s ? "#007A3D" : "var(--bg)",
-        color: activeSection === s ? "#fff" : "var(--text-secondary)",
-        transition: "all 0.2s",
-      }}
-    >
-      {s === "basic" ? "Basic" : s === "social" ? "Social" : "Password"}
-    </button>
-  ))}
-</div>
+        {/* Basic Info */}
+        <div style={sectionStyle}>Basic Info</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div>
+            <label style={labelStyle}>Full Name</label>
+            <input name="name" value={form.name} onChange={handleChange} placeholder="Your full name" style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Username</label>
+            <input name="username" value={form.username} onChange={handleChange} placeholder="@username" style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Bio</label>
+            <textarea name="bio" value={form.bio} onChange={handleChange} placeholder="Tell your coursemates about yourself..." rows={3} style={{ ...inputStyle, resize: "none" }} />
+          </div>
+          <div>
+            <label style={labelStyle}>Phone Number</label>
+            <input name="phone" value={form.phone} onChange={handleChange} placeholder="+234 000 000 0000" style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Level</label>
+            <select name="level" value={form.level} onChange={handleChange} style={inputStyle}>
+              {["100L", "200L", "300L", "400L", "500L", "600L"].map((l) => (
+                <option key={l} value={l}>{l}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}>Graduation Year</label>
+            <input name="graduation_year" type="number" value={form.graduation_year} onChange={handleChange} placeholder="e.g. 2028" style={inputStyle} />
+          </div>
+        </div>
 
-        {/* Basic info */}
-        {activeSection === "basic" && (
-          <div className="flex flex-col gap-3">
-            <div>
-              <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>Full Name</label>
-              <input name="name" value={form.name} onChange={handleChange} placeholder="Your full name"
-                style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "1.5px solid var(--border)", background: "var(--bg)", color: "var(--text-primary)", fontSize: 14, outline: "none", fontFamily: "inherit" }}
-              />
+        {/* Social Links */}
+        <div style={sectionStyle}>Social Links</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div>
+            <label style={labelStyle}>Twitter / X</label>
+            <input name="twitter" value={form.twitter || ""} onChange={handleChange} placeholder="@yourtwitter" style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Instagram</label>
+            <input name="instagram" value={form.instagram || ""} onChange={handleChange} placeholder="@yourinstagram" style={inputStyle} />
+          </div>
+        </div>
+
+        {/* Save button */}
+        <div style={{ display: "flex", gap: 12 }}>
+          <button
+            onClick={onClose}
+            style={{ flex: 1, padding: 12, borderRadius: 12, border: "1.5px solid var(--border)", color: "var(--text-secondary)", backgroundColor: "var(--bg)", fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            style={{ flex: 1, padding: 12, borderRadius: 12, border: "none", color: "#fff", background: "linear-gradient(135deg, #007A3D, #4c1d95)", fontWeight: 700, fontSize: 14, cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit" }}
+          >
+            {saving ? "Saving..." : "Save Changes"}
+          </button>
+        </div>
+
+        {/* Change Password */}
+        <div style={sectionStyle}>Change Password</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {passwordSuccess ? (
+            <div style={{ textAlign: "center", padding: "20px 0" }}>
+              <div style={{ fontSize: 36, marginBottom: 8 }}>✅</div>
+              <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>Password updated!</div>
             </div>
-            <div>
-              <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>Username</label>
-              <input name="username" value={form.username} onChange={handleChange} placeholder="@username"
-                style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "1.5px solid var(--border)", background: "var(--bg)", color: "var(--text-primary)", fontSize: 14, outline: "none", fontFamily: "inherit" }}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>Bio</label>
-              <textarea name="bio" value={form.bio} onChange={handleChange} placeholder="Tell your coursemates about yourself..." rows={3}
-                style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "1.5px solid var(--border)", background: "var(--bg)", color: "var(--text-primary)", fontSize: 14, outline: "none", fontFamily: "inherit", resize: "none" }}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>Phone Number</label>
-              <input name="phone" value={form.phone} onChange={handleChange} placeholder="+234 000 000 0000"
-                style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "1.5px solid var(--border)", background: "var(--bg)", color: "var(--text-primary)", fontSize: 14, outline: "none", fontFamily: "inherit" }}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>Level</label>
-              <select name="level" value={form.level} onChange={handleChange}
-                style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "1.5px solid var(--border)", background: "var(--bg)", color: "var(--text-primary)", fontSize: 14, outline: "none", fontFamily: "inherit" }}
+          ) : (
+            <>
+              {passwordError && (
+                <div style={{ padding: "10px 16px", borderRadius: 12, backgroundColor: "#fef2f2", color: "#ef4444", fontSize: 13, fontWeight: 500 }}>
+                  ⚠️ {passwordError}
+                </div>
+              )}
+              <div>
+                <label style={labelStyle}>Current Password</label>
+                <input
+                  type="password"
+                  value={passwordForm.currentPassword}
+                  onChange={(e) => setPasswordForm((p) => ({ ...p, currentPassword: e.target.value }))}
+                  placeholder="••••••••"
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>New Password</label>
+                <input
+                  type="password"
+                  value={passwordForm.newPassword}
+                  onChange={(e) => setPasswordForm((p) => ({ ...p, newPassword: e.target.value }))}
+                  placeholder="••••••••"
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Confirm New Password</label>
+                <input
+                  type="password"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) => setPasswordForm((p) => ({ ...p, confirmPassword: e.target.value }))}
+                  placeholder="••••••••"
+                  style={inputStyle}
+                />
+              </div>
+              <button
+                onClick={handlePasswordSave}
+                disabled={changingPassword}
+                style={{ width: "100%", padding: 12, borderRadius: 12, border: "none", color: "#fff", background: "linear-gradient(135deg, #007A3D, #4c1d95)", fontWeight: 700, fontSize: 14, cursor: changingPassword ? "not-allowed" : "pointer", fontFamily: "inherit" }}
               >
-                {["100L", "200L", "300L", "400L", "500L", "600L"].map((l) => (
-                  <option key={l} value={l}>{l}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>Graduation Year</label>
-              <input name="graduation_year" type="number" value={form.graduation_year} onChange={handleChange} placeholder="e.g. 2028"
-                style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "1.5px solid var(--border)", background: "var(--bg)", color: "var(--text-primary)", fontSize: 14, outline: "none", fontFamily: "inherit" }}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Social links */}
-        {activeSection === "social" && (
-          <div className="flex flex-col gap-3">
-            <div>
-              <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>Twitter / X</label>
-              <input name="twitter" value={form.twitter || ""} onChange={handleChange} placeholder="@yourtwitter"
-                style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "1.5px solid var(--border)", background: "var(--bg)", color: "var(--text-primary)", fontSize: 14, outline: "none", fontFamily: "inherit" }}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold mb-1.5 block" style={{ color: "var(--text-secondary)" }}>Instagram</label>
-              <input name="instagram" value={form.instagram || ""} onChange={handleChange} placeholder="@yourinstagram"
-                style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "1.5px solid var(--border)", background: "var(--bg)", color: "var(--text-primary)", fontSize: 14, outline: "none", fontFamily: "inherit" }}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Change password */}
-        {activeSection === "password" && (
-          <ChangePasswordSection onClose={onClose} />
-        )}
-
-        {activeSection !== "password" && (
-          <div className="flex gap-3">
-            <button
-              onClick={onClose}
-              style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1.5px solid var(--border)", color: "var(--text-secondary)", backgroundColor: "var(--bg)", fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              style={{ flex: 1, padding: "12px", borderRadius: 12, border: "none", color: "#fff", background: "linear-gradient(135deg, #007A3D, #4c1d95)", fontWeight: 700, fontSize: 14, cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit" }}
-            >
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
-          </div>
-        )}
+                {changingPassword ? "Updating..." : "Update Password"}
+              </button>
+            </>
+          )}
+        </div>
       </motion.div>
     </div>
   );
