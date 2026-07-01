@@ -64,12 +64,15 @@ function EditProfileSheet({ profile, onClose, onSave }) {
         <div className="w-10 h-1 rounded-full bg-gray-300 mx-auto" />
         <div className="font-bold text-lg" style={{ color: "var(--text-primary)" }}>Edit Profile</div>
 
-        {/* Section tabs */}
+      {/* Section tabs */}
 <div style={{ display: "flex", borderRadius: 12, overflow: "hidden", border: "1.5px solid var(--border)" }}>
   {["basic", "social", "password"].map((s) => (
     <button
       key={s}
-      onClick={() => setActiveSection(s)}
+      onClick={(e) => {
+        e.stopPropagation();
+        setActiveSection(s);
+      }}
       style={{
         flex: 1,
         padding: "10px 0",
