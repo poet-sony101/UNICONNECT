@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useUser } from "../context/UserContext";
-import UploadStep from "../components/onboarding/UploadStep";
 import API from "../utils/api";
 
 export default function Onboarding({ onComplete }) {
@@ -9,7 +8,6 @@ export default function Onboarding({ onComplete }) {
   const [loading, setLoading] = useState(true);
   const { faculty, setFaculty, department, setDepartment, setIsVerified } = useUser();
 
-  // Fetch real faculties from backend
   useEffect(() => {
     const fetchFaculties = async () => {
       try {
@@ -29,39 +27,31 @@ export default function Onboarding({ onComplete }) {
     setStep(2);
   };
 
-  const handleDeptSelect = (d) => {
+  const handleDeptSelect = async (d) => {
     setDepartment(d);
-    setStep(3);
-  };
-
-  const handleComplete = async () => {
     try {
       const allFaculties = faculties;
       let deptId = null;
       allFaculties.forEach((f) => {
-        f.departments.forEach((d) => {
-          if (d.name === department) deptId = d.id;
+        f.departments.forEach((dept) => {
+          if (dept.name === d) deptId = dept.id;
         });
       });
-
       if (deptId) {
         await API.post("/users/join-department", { departmentId: deptId });
         const updatedUser = {
           ...JSON.parse(localStorage.getItem("user") || "{}"),
           department_id: deptId,
-          department,
+          department: d,
           faculty,
         };
         localStorage.setItem("user", JSON.stringify(updatedUser));
       }
-
-      setIsVerified(true);
-      onComplete();
     } catch (err) {
-      console.error("Onboarding error:", err);
-      setIsVerified(true);
-      onComplete();
+      console.error("Join department error:", err);
     }
+    setIsVerified(false);
+    onComplete();
   };
 
   return (
@@ -81,7 +71,7 @@ export default function Onboarding({ onComplete }) {
       <div className="bg-[#1c1f26] rounded-2xl p-7 w-full max-w-sm border border-[#2d3139]">
         {/* Progress bar */}
         <div className="flex gap-1.5 mb-7">
-          {[0, 1, 2, 3].map((i) => (
+          {[0, 1, 2].map((i) => (
             <div
               key={i}
               className="h-1 flex-1 rounded-full transition-all duration-300"
@@ -162,11 +152,6 @@ export default function Onboarding({ onComplete }) {
               ← Back
             </button>
           </>
-        )}
-
-        {/* Step 3 — Upload */}
-        {step === 3 && (
-          <UploadStep department={department} onComplete={handleComplete} />
         )}
       </div>
     </div>

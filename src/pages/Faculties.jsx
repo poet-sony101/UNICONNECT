@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
 import { useUser } from "../context/UserContext";
 import Avatar from "../components/layout/Avatar";
 import API from "../utils/api";
 import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
 
 const styles = `
   .search-input {
@@ -41,6 +41,10 @@ function DepartmentSheet({ dept, userDeptId, userGroups, onClose, onJoin }) {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
+  const [uploaded, setUploaded] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   const isMyDept = dept.id === userDeptId;
   const isJoined = isMyDept || userGroups.includes(dept.id);
@@ -59,11 +63,35 @@ function DepartmentSheet({ dept, userDeptId, userGroups, onClose, onJoin }) {
     fetchMembers();
   }, [dept.id]);
 
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      await API.post("/upload/admission-letter", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setUploaded(true);
+    } catch (err) {
+      console.error("Upload error:", err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleJoin = async () => {
+    if (!showUpload) {
+      setShowUpload(true);
+      return;
+    }
+    if (!uploaded) return;
     setJoining(true);
     try {
       await API.post(`/departments/${dept.id}/join`);
       onJoin(dept.id);
+      onClose();
     } catch (err) {
       console.error("Join error:", err);
     } finally {
@@ -82,7 +110,6 @@ function DepartmentSheet({ dept, userDeptId, userGroups, onClose, onJoin }) {
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Handle */}
         <div className="w-10 h-1 rounded-full bg-gray-300 mx-auto mb-5" />
 
         {/* Header */}
@@ -100,19 +127,73 @@ function DepartmentSheet({ dept, userDeptId, userGroups, onClose, onJoin }) {
           </div>
         </div>
 
-        {/* Join button */}
+        {/* Join flow */}
         {!isJoined ? (
-          <button
-            onClick={handleJoin}
-            disabled={joining}
-            className="w-full py-3.5 rounded-xl font-bold text-sm text-white mb-5"
-            style={{
-              background: joining ? "#2d3139" : "linear-gradient(135deg, #007A3D, #4c1d95)",
-              cursor: joining ? "not-allowed" : "pointer",
-            }}
-          >
-            {joining ? "Joining..." : "Join Group"}
-          </button>
+          <>
+            {showUpload && (
+              <div className="mb-4">
+                <div className="text-sm font-bold mb-1" style={{ color: "var(--text-primary)" }}>
+                  Upload Admission Letter
+                </div>
+                <div className="text-xs mb-3" style={{ color: "var(--text-secondary)" }}>
+                  To join this group, upload your UNILAG admission letter to verify you're a student.
+                </div>
+                {!uploaded ? (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed rounded-xl py-6 text-center cursor-pointer mb-3"
+                    style={{ borderColor: "var(--border)" }}
+                  >
+                    <div className="text-3xl mb-2">📄</div>
+                    <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                      {uploading ? "Uploading..." : "Tap to upload"}
+                    </div>
+                    <div className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>
+                      PDF or image accepted
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*,.pdf"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl mb-3"
+                    style={{ backgroundColor: "#ecfdf5", border: "1px solid #bbf7d0" }}
+                  >
+                    <span className="text-xl">✅</span>
+                    <div>
+                      <div className="text-sm font-bold text-emerald-700">Admission letter uploaded</div>
+                      <div className="text-xs text-emerald-600">Ready to join!</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <button
+              onClick={handleJoin}
+              disabled={joining || (showUpload && !uploaded)}
+              className="w-full py-3.5 rounded-xl font-bold text-sm text-white mb-5"
+              style={{
+                background: joining || (showUpload && !uploaded)
+                  ? "#2d3139"
+                  : "linear-gradient(135deg, #007A3D, #4c1d95)",
+                cursor: joining || (showUpload && !uploaded) ? "not-allowed" : "pointer",
+              }}
+            >
+              {joining
+                ? "Joining..."
+                : showUpload
+                ? uploaded
+                  ? "Join Group ✓"
+                  : "Upload letter first"
+                : "Join Group"}
+            </button>
+          </>
         ) : (
           <div
             className="w-full py-3.5 rounded-xl font-bold text-sm text-center mb-5"
@@ -198,7 +279,6 @@ export default function Faculties() {
     if (joined) setMyGroups((prev) => [...prev, joined]);
   };
 
-  // Filter faculties based on search
   const filtered = faculties
     .map((f) => ({
       ...f,
@@ -226,10 +306,10 @@ export default function Faculties() {
     <div className="px-4 py-4 pb-24">
       <style>{styles}</style>
 
-      <div className="font-extrabold text-xl mb-1 transition-colors duration-300" style={{ color: "var(--text-primary)" }}>
+      <div className="font-extrabold text-xl mb-1" style={{ color: "var(--text-primary)" }}>
         Faculties & Departments
       </div>
-      <div className="text-sm mb-4 transition-colors duration-300" style={{ color: "var(--text-secondary)" }}>
+      <div className="text-sm mb-4" style={{ color: "var(--text-secondary)" }}>
         All verified UNILAG groups
       </div>
 
@@ -253,10 +333,7 @@ export default function Faculties() {
                 key={g.id}
                 onClick={() => setActiveDept({ ...g, faculty: g.faculty })}
                 className="flex-shrink-0 px-4 py-2.5 rounded-xl border cursor-pointer"
-                style={{
-                  background: "linear-gradient(135deg, #064e3b, #4c1d95)",
-                  minWidth: 120,
-                }}
+                style={{ background: "linear-gradient(135deg, #064e3b, #4c1d95)", minWidth: 120 }}
               >
                 <div className="text-white font-bold text-xs">{g.name}</div>
                 <div className="text-white/60 text-[10px] mt-0.5">{g.member_count || 0} members</div>
@@ -270,16 +347,12 @@ export default function Faculties() {
       {filtered.map((f) => (
         <div
           key={f.faculty_id}
-          className="rounded-2xl mb-4 border overflow-hidden shadow-sm transition-colors duration-300"
+          className="rounded-2xl mb-4 border overflow-hidden shadow-sm"
           style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
         >
           <div
-            className="px-4 py-3.5 font-bold text-sm border-b transition-colors duration-300"
-            style={{
-              color: "var(--text-primary)",
-              borderColor: "var(--border)",
-              backgroundColor: "var(--bg)",
-            }}
+            className="px-4 py-3.5 font-bold text-sm border-b"
+            style={{ color: "var(--text-primary)", borderColor: "var(--border)", backgroundColor: "var(--bg)" }}
           >
             {f.faculty}
           </div>
@@ -288,7 +361,7 @@ export default function Faculties() {
             <div
               key={dept.id}
               onClick={() => setActiveDept({ ...dept, faculty: f.faculty })}
-              className="px-4 py-3.5 flex items-center justify-between border-b cursor-pointer transition-colors duration-300"
+              className="px-4 py-3.5 flex items-center justify-between border-b cursor-pointer"
               style={{ borderColor: i !== f.departments.length - 1 ? "var(--border)" : "transparent" }}
             >
               <div>
