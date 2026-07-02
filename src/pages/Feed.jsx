@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Avatar from "../components/layout/Avatar";
 import Tag from "../components/layout/Tag";
 import { useUser } from "../context/UserContext";
@@ -13,38 +13,25 @@ const styles = `
     60% { transform: scale(0.9); }
     100% { transform: scale(1); }
   }
-  .heart-bounce {
-    animation: bounceHeart 0.4s ease forwards;
-  }
+  .heart-bounce { animation: bounceHeart 0.4s ease forwards; }
   .overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 40;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 40; display: flex; align-items: flex-end; justify-content: center;
   }
   .sheet {
-    width: 100%;
-    max-width: 480px;
-    border-radius: 20px 20px 0 0;
-    padding: 20px;
-    max-height: 70vh;
-    display: flex;
-    flex-direction: column;
+    width: 100%; max-width: 480px; border-radius: 20px 20px 0 0;
+    padding: 20px; max-height: 70vh; display: flex; flex-direction: column;
   }
   .comment-input {
-    flex: 1;
-    padding: 10px 16px;
-    border-radius: 22px;
-    border: 1.5px solid var(--border);
-    background: var(--bg);
-    color: var(--text-primary);
-    font-size: 14px;
-    outline: none;
-    font-family: inherit;
+    flex: 1; padding: 10px 16px; border-radius: 22px;
+    border: 1.5px solid var(--border); background: var(--bg);
+    color: var(--text-primary); font-size: 14px; outline: none; font-family: inherit;
   }
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .spin { animation: spin 1s linear infinite; }
 `;
 
 const TAGS = ["All", "Admissions", "Department News", "Campus Life"];
@@ -64,7 +51,7 @@ function CommentsSheet({ post, onClose, fetchComments, addComment }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  useState(() => {
     fetchComments(post.id).then((data) => {
       setComments(data);
       setLoading(false);
@@ -261,10 +248,6 @@ export default function Feed() {
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-  const handleNewPost = (post) => {
-    refresh();
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -312,15 +295,6 @@ export default function Feed() {
             {t}
           </button>
         ))}
-
-        {/* Refresh button */}
-        <button
-          onClick={refresh}
-          className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold border transition-colors duration-200"
-          style={{ backgroundColor: "var(--card)", color: "var(--text-secondary)", borderColor: "var(--border)", cursor: "pointer" }}
-        >
-          {refreshing ? "⏳" : "🔄 Refresh"}
-        </button>
       </div>
 
       {/* Create post box */}
@@ -329,11 +303,11 @@ export default function Feed() {
         style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
       >
         <div className="flex items-center gap-3">
-          <Avatar
-            initials={(user.username || "ME").slice(0, 2).toUpperCase()}
-            color="#7c3aed"
-            size={38}
-          />
+          {user.avatar_url ? (
+            <img src={user.avatar_url} alt="avatar" className="w-10 h-10 rounded-full object-cover" />
+          ) : (
+            <Avatar initials={(user.username || "ME").slice(0, 2).toUpperCase()} color="#7c3aed" size={38} />
+          )}
           <button
             onClick={() => setCreatePost(true)}
             className="flex-1 text-left px-4 py-2.5 rounded-full text-sm transition-colors duration-300"
@@ -348,12 +322,8 @@ export default function Feed() {
       {posts.length === 0 ? (
         <div className="text-center py-16" style={{ color: "var(--text-secondary)" }}>
           <div className="text-4xl mb-3">📭</div>
-          <div className="font-bold text-base mb-1" style={{ color: "var(--text-primary)" }}>
-            No posts yet
-          </div>
-          <div className="text-sm">
-            {activeTag ? `No ${activeTag} posts yet` : "Be the first to post something!"}
-          </div>
+          <div className="font-bold text-base mb-1" style={{ color: "var(--text-primary)" }}>No posts yet</div>
+          <div className="text-sm">{activeTag ? `No ${activeTag} posts yet` : "Be the first to post something!"}</div>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
@@ -367,11 +337,15 @@ export default function Feed() {
               style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
             >
               <div className="flex items-center gap-3 mb-3">
-                <Avatar
-                  initials={(post.full_name || post.username || "U").slice(0, 2).toUpperCase()}
-                  color={post.avatar_color || "#007A3D"}
-                  size={40}
-                />
+                {post.avatar_url ? (
+                  <img src={post.avatar_url} alt="avatar" className="w-10 h-10 rounded-full object-cover" />
+                ) : (
+                  <Avatar
+                    initials={(post.full_name || post.username || "U").slice(0, 2).toUpperCase()}
+                    color={post.avatar_color || "#007A3D"}
+                    size={40}
+                  />
+                )}
                 <div className="flex-1">
                   <div className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>
                     {post.full_name || post.username}
@@ -382,21 +356,20 @@ export default function Feed() {
                 </div>
                 <div className="flex items-center gap-2">
                   {post.tag && <Tag label={post.tag} />}
-                  {/* Delete button — only for own posts */}
                   {post.author_id === user.id && (
-  <button
-    onClick={() => deletePost(post.id)}
-    disabled={post.deleting}
-    className="text-xs px-2 py-1 rounded-lg transition-all"
-    style={{
-      color: post.deleting ? "#9ca3af" : "#ef4444",
-      backgroundColor: post.deleting ? "#f3f4f6" : "#fef2f2",
-      border: "none",
-      cursor: post.deleting ? "not-allowed" : "pointer",
-    }}
-  >
-    {post.deleting ? "⏳" : "🗑"}
-  </button>
+                    <button
+                      onClick={() => deletePost(post.id)}
+                      disabled={post.deleting}
+                      className="text-xs px-2 py-1 rounded-lg transition-all"
+                      style={{
+                        color: post.deleting ? "#9ca3af" : "#ef4444",
+                        backgroundColor: post.deleting ? "#f3f4f6" : "#fef2f2",
+                        border: "none",
+                        cursor: post.deleting ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      {post.deleting ? "⏳" : "🗑"}
+                    </button>
                   )}
                 </div>
               </div>
@@ -451,6 +424,17 @@ export default function Feed() {
         </div>
       )}
 
+      {/* Floating refresh button */}
+      <motion.button
+        onClick={refresh}
+        whileTap={{ scale: 0.85 }}
+        whileHover={{ scale: 1.1 }}
+        className="fixed bottom-24 right-4 w-14 h-14 rounded-full text-white flex items-center justify-center shadow-xl z-20 text-2xl"
+        style={{ background: "linear-gradient(135deg, #007A3D, #4c1d95)" }}
+      >
+        <span className={refreshing ? "spin" : ""}>🔄</span>
+      </motion.button>
+
       {/* Comments sheet */}
       <AnimatePresence>
         {activeComments && (
@@ -475,7 +459,7 @@ export default function Feed() {
         {createPost && (
           <CreatePostSheet
             onClose={() => setCreatePost(false)}
-            onPost={handleNewPost}
+            onPost={() => refresh()}
           />
         )}
       </AnimatePresence>
