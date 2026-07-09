@@ -3,6 +3,7 @@ const TABS = [
   { id: "colleges", icon: "🎓", label: "Faculties" },
   { id: "chat", icon: "👥", label: "Group" },
   { id: "dms", icon: "💬", label: "Messages" },
+  { id: "explore", icon: "🔍", label: "Explore" },
   { id: "profile", icon: "👤", label: "Profile" },
 ];
 

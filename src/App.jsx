@@ -12,6 +12,7 @@ import BottomNav from "./components/layout/BottomNav";
 import Avatar from "./components/layout/Avatar";
 import { AnimatePresence, motion } from "framer-motion";
 import API from "./utils/api";
+import Explore from "./pages/Explore";
 
 const TAB_TITLES = {
   feed: "UniConnect",
@@ -19,6 +20,7 @@ const TAB_TITLES = {
   chat: "Group Chat",
   dms: "Messages",
   profile: "My Profile",
+  explore: "Explore",
 };
 
 const INITIAL_GROUP_MESSAGES = [
@@ -250,6 +252,7 @@ function MainApp() {
             <Messages dmList={dmList} setDmList={setDmList} />
           )}
           {tab === "profile" && <Profile />}
+          {tab === "explore" && <Explore />}
         </motion.div>
       </AnimatePresence>
 
