@@ -250,8 +250,11 @@ export default function Faculties() {
   const [activeDept, setActiveDept] = useState(null);
   const [userGroups, setUserGroups] = useState([]);
   const [myGroups, setMyGroups] = useState([]);
+  const [departmentCounts, setDepartmentCounts] = useState({});
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  const getMemberCount = (deptId, fallback = 0) => departmentCounts[deptId] ?? fallback;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -260,9 +263,32 @@ export default function Faculties() {
           API.get("/departments"),
           API.get("/departments/user/groups"),
         ]);
+        const departments = deptRes.data.flatMap((f) =>
+          f.departments.map((d) => ({ ...d, faculty: f.faculty }))
+        );
+
         setFaculties(deptRes.data);
         setMyGroups(groupRes.data);
         setUserGroups(groupRes.data.map((g) => g.id));
+
+        const initialCounts = Object.fromEntries(
+          departments.map((dept) => [dept.id, dept.member_count || 0])
+        );
+        setDepartmentCounts((prev) => ({ ...prev, ...initialCounts }));
+
+        const resolvedCounts = await Promise.all(
+          departments.map(async (dept) => {
+            try {
+              const res = await API.get(`/departments/${dept.id}/members`);
+              return [dept.id, res.data?.length || 0];
+            } catch (error) {
+              console.error(`Members count fetch error for ${dept.id}:`, error);
+              return [dept.id, dept.member_count || 0];
+            }
+          })
+        );
+
+        setDepartmentCounts((prev) => ({ ...prev, ...Object.fromEntries(resolvedCounts) }));
       } catch (err) {
         console.error("Faculties fetch error:", err);
       } finally {
@@ -274,6 +300,7 @@ export default function Faculties() {
 
   const handleJoin = (deptId) => {
     setUserGroups((prev) => [...prev, deptId]);
+    setDepartmentCounts((prev) => ({ ...prev, [deptId]: (prev[deptId] || 0) + 1 }));
     const joined = faculties
       .flatMap((f) => f.departments.map((d) => ({ ...d, faculty: f.faculty })))
       .find((d) => d.id === deptId);
@@ -337,7 +364,7 @@ export default function Faculties() {
                 style={{ background: "linear-gradient(135deg, #064e3b, #4c1d95)", minWidth: 120 }}
               >
                 <div className="text-white font-bold text-xs">{g.name}</div>
-                <div className="text-white/60 text-[10px] mt-0.5">{g.member_count || 0} members</div>
+                <div className="text-white/60 text-[10px] mt-0.5">{getMemberCount(g.id, g.member_count || 0)} members</div>
               </div>
             ))}
           </div>
@@ -370,7 +397,7 @@ export default function Faculties() {
                   {dept.name}
                 </span>
                 <div className="text-xs mt-0.5" style={{ color: "var(--text-secondary)", opacity: 0.6 }}>
-                  {dept.member_count || 0} members
+                  {getMemberCount(dept.id, dept.member_count || 0)} members
                 </div>
               </div>
               <div className="flex items-center gap-2">
