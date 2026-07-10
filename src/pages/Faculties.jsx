@@ -48,6 +48,7 @@ function DepartmentSheet({ dept, userDeptId, userGroups, onClose, onJoin }) {
 
   const isMyDept = dept.id === userDeptId;
   const isJoined = isMyDept || userGroups.includes(dept.id);
+  const memberCount = loading ? dept.member_count || 0 : members.length;
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -121,7 +122,7 @@ function DepartmentSheet({ dept, userDeptId, userGroups, onClose, onJoin }) {
           <div className="text-white/60 text-xs mt-1">{dept.faculty}</div>
           <div className="flex items-center gap-4 mt-3">
             <div className="text-center">
-              <div className="text-white font-bold text-xl">{dept.member_count || 0}</div>
+              <div className="text-white font-bold text-xl">{memberCount}</div>
               <div className="text-white/60 text-xs">Members</div>
             </div>
           </div>
@@ -165,7 +166,7 @@ function DepartmentSheet({ dept, userDeptId, userGroups, onClose, onJoin }) {
                     style={{ backgroundColor: "#ecfdf5", border: "1px solid #bbf7d0" }}
                   >
                     <span className="text-xl">✅</span>
-                    <div>
+                    <div> 
                       <div className="text-sm font-bold text-emerald-700">Admission letter uploaded</div>
                       <div className="text-xs text-emerald-600">Ready to join!</div>
                     </div>
