@@ -1,26 +1,26 @@
 import { useState, useEffect } from "react";
 import { UserProvider } from "./context/UserContext";
 import { ThemeProvider, useTheme } from "./context/ThemeContext";
+import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
-import Onboarding from "./pages/Onboarding";
 import Feed from "./pages/Feed";
 import Faculties from "./pages/Faculties";
 import GroupChat from "./pages/GroupChat";
 import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
+import Explore from "./pages/Explore";
 import BottomNav from "./components/layout/BottomNav";
 import Avatar from "./components/layout/Avatar";
 import { AnimatePresence, motion } from "framer-motion";
 import API from "./utils/api";
-import Explore from "./pages/Explore";
 
 const TAB_TITLES = {
   feed: "UniConnect",
   colleges: "Faculties",
   chat: "Group Chat",
   dms: "Messages",
-  profile: "My Profile",
   explore: "Explore",
+  profile: "My Profile",
 };
 
 const INITIAL_GROUP_MESSAGES = [
@@ -72,30 +72,11 @@ function NotificationsPanel({ onClose }) {
         exit={{ opacity: 0, y: -10 }}
         transition={{ duration: 0.2 }}
         onClick={(e) => e.stopPropagation()}
-        style={{
-          backgroundColor: "var(--card)",
-          borderRadius: "0 0 16px 16px",
-          width: "100%",
-          maxWidth: 480,
-          maxHeight: "70vh",
-          overflowY: "auto",
-          border: "1px solid var(--border)",
-          borderTop: "none",
-        }}
+        style={{ backgroundColor: "var(--card)", borderRadius: "0 0 16px 16px", width: "100%", maxWidth: 480, maxHeight: "70vh", overflowY: "auto", border: "1px solid var(--border)", borderTop: "none" }}
       >
-        <div
-          className="px-5 py-4 flex items-center justify-between border-b sticky top-0"
-          style={{ borderColor: "var(--border)", backgroundColor: "var(--card)" }}
-        >
-          <div className="font-bold text-base" style={{ color: "var(--text-primary)" }}>
-            Notifications
-          </div>
-          <button
-            onClick={onClose}
-            style={{ color: "#007A3D", background: "none", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600 }}
-          >
-            Close
-          </button>
+        <div className="px-5 py-4 flex items-center justify-between border-b sticky top-0" style={{ borderColor: "var(--border)", backgroundColor: "var(--card)" }}>
+          <div className="font-bold text-base" style={{ color: "var(--text-primary)" }}>Notifications</div>
+          <button onClick={onClose} style={{ color: "#007A3D", background: "none", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>Close</button>
         </div>
 
         {loading ? (
@@ -111,29 +92,18 @@ function NotificationsPanel({ onClose }) {
         ) : (
           <div className="flex flex-col">
             {notifications.map((n, index) => (
-              <div
-                key={index}
-                className="px-5 py-4 flex items-start gap-3 border-b"
-                style={{ borderColor: "var(--border)" }}
-              >
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-                  style={{ backgroundColor: "var(--bg)", border: "1px solid var(--border)" }}
-                >
+              <div key={index} className="px-5 py-4 flex items-start gap-3 border-b" style={{ borderColor: "var(--border)" }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0" style={{ backgroundColor: "var(--bg)", border: "1px solid var(--border)" }}>
                   {getIcon(n.type)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-                    {n.message}
-                  </div>
+                  <div className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{n.message}</div>
                   {n.context && (
                     <div className="text-xs mt-0.5 truncate" style={{ color: "var(--text-secondary)" }}>
                       "{n.context.slice(0, 50)}{n.context.length > 50 ? "..." : ""}"
                     </div>
                   )}
-                  <div className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>
-                    {timeAgo(n.created_at)}
-                  </div>
+                  <div className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>{timeAgo(n.created_at)}</div>
                 </div>
               </div>
             ))}
@@ -145,11 +115,10 @@ function NotificationsPanel({ onClose }) {
 }
 
 function MainApp() {
-  const [authed, setAuthed] = useState(!!localStorage.getItem("token"));
-  const [onboarded, setOnboarded] = useState(
-    !!localStorage.getItem("token") &&
-    !!JSON.parse(localStorage.getItem("user") || "{}").department_id
+  const [screen, setScreen] = useState(
+    localStorage.getItem("token") ? "app" : "landing"
   );
+  const [authMode, setAuthMode] = useState("signup");
   const [tab, setTab] = useState("feed");
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifCount, setNotifCount] = useState(0);
@@ -161,15 +130,33 @@ function MainApp() {
   const userInitials = (user.full_name || user.username || "ME").slice(0, 2).toUpperCase();
 
   useEffect(() => {
-    if (!authed) return;
+    if (screen !== "app") return;
     API.get("/users/me/notifications-feed")
       .then((res) => setNotifCount(res.data.length))
       .catch(console.error);
-  }, [authed]);
+  }, [screen]);
 
-  if (!authed) return <Auth onComplete={() => setAuthed(true)} />;
-  if (!onboarded) return <Onboarding onComplete={() => setOnboarded(true)} />;
+  // Landing page
+  if (screen === "landing") {
+    return (
+      <Landing
+        onLogin={() => { setAuthMode("login"); setScreen("auth"); }}
+        onSignup={() => { setAuthMode("signup"); setScreen("auth"); }}
+      />
+    );
+  }
 
+  // Auth page
+  if (screen === "auth") {
+    return (
+      <Auth
+        initialMode={authMode}
+        onComplete={() => setScreen("app")}
+      />
+    );
+  }
+
+  // Main app
   return (
     <div
       className="max-w-[480px] mx-auto min-h-screen transition-colors duration-300"
@@ -189,20 +176,11 @@ function MainApp() {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          {/* Theme toggle */}
-          <button
-            onClick={toggleTheme}
-            className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-sm"
-          >
+          <button onClick={toggleTheme} className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-sm">
             {theme === "light" ? "🌙" : "☀️"}
           </button>
-
-          {/* Notifications */}
           <button
-            onClick={() => {
-              setShowNotifications(!showNotifications);
-              setNotifCount(0);
-            }}
+            onClick={() => { setShowNotifications(!showNotifications); setNotifCount(0); }}
             className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-sm relative"
           >
             🔔
@@ -212,12 +190,7 @@ function MainApp() {
               </div>
             )}
           </button>
-
-          {/* Profile avatar */}
-          <button
-            onClick={() => setTab("profile")}
-            className="rounded-full border-2 border-emerald-500"
-          >
+          <button onClick={() => setTab("profile")} className="rounded-full border-2 border-emerald-500">
             {user.avatar_url ? (
               <img src={user.avatar_url} alt="avatar" className="w-8 h-8 rounded-full object-cover" />
             ) : (
@@ -229,12 +202,10 @@ function MainApp() {
 
       {/* Notifications panel */}
       <AnimatePresence>
-        {showNotifications && (
-          <NotificationsPanel onClose={() => setShowNotifications(false)} />
-        )}
+        {showNotifications && <NotificationsPanel onClose={() => setShowNotifications(false)} />}
       </AnimatePresence>
 
-      {/* Animated Pages */}
+      {/* Pages */}
       <AnimatePresence mode="popLayout">
         <motion.div
           key={tab}
@@ -245,14 +216,10 @@ function MainApp() {
         >
           {tab === "feed" && <Feed />}
           {tab === "colleges" && <Faculties />}
-          {tab === "chat" && (
-            <GroupChat messages={groupMessages} setMessages={setGroupMessages} />
-          )}
-          {tab === "dms" && (
-            <Messages dmList={dmList} setDmList={setDmList} />
-          )}
-          {tab === "profile" && <Profile />}
+          {tab === "chat" && <GroupChat messages={groupMessages} setMessages={setGroupMessages} />}
+          {tab === "dms" && <Messages dmList={dmList} setDmList={setDmList} />}
           {tab === "explore" && <Explore />}
+          {tab === "profile" && <Profile />}
         </motion.div>
       </AnimatePresence>
 

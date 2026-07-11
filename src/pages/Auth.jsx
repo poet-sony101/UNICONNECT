@@ -29,8 +29,8 @@ const styles = `
   }
 `;
 
-export default function Auth({ onComplete }) {
-  const [isLogin, setIsLogin] = useState(false);
+export default function Auth({ onComplete, initialMode = "signup" }) {
+  const [isLogin, setIsLogin] = useState(initialMode === "login");
   const [form, setForm] = useState({ username: "", email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);

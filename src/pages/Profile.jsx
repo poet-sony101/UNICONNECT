@@ -693,7 +693,7 @@ export default function Profile() {
       {/* Sign out */}
       <div className="px-5 mt-2">
         <button
-          onClick={() => { localStorage.clear(); window.location.reload(); }}
+          onClick={() => {localStorage.clear(); window.location.reload(); }}
           onMouseEnter={(e) => { e.target.style.backgroundColor = "#fee2e2"; }}
           onMouseLeave={(e) => { e.target.style.backgroundColor = "#fef2f2"; }}
           style={{ width: "100%", padding: "14px", borderRadius: 16, border: "1px solid #fee2e2", backgroundColor: "#fef2f2", color: "#ef4444", fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}
