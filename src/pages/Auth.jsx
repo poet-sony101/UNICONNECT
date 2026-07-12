@@ -41,7 +41,7 @@ export default function Auth({ onComplete, initialMode = "signup" }) {
     setError("");
   };
 
-  const handleSubmit = async () => {
+const handleSubmit = async () => {
   if (!form.email || !form.password) {
     setError("Please fill in all fields.");
     return;
@@ -66,12 +66,16 @@ export default function Auth({ onComplete, initialMode = "signup" }) {
 
     const res = await API.post(endpoint, payload);
 
-    // Save token and user to localStorage
     localStorage.setItem("token", res.data.token);
     localStorage.setItem("user", JSON.stringify(res.data.user));
 
     setLoading(false);
-    onComplete();
+
+    if (res.data.requiresVerification) {
+      onComplete({ requiresVerification: true, email: form.email });
+    } else {
+      onComplete({ requiresVerification: false });
+    }
   } catch (err) {
     setLoading(false);
     setError(err.response?.data?.message || "Something went wrong. Try again.");

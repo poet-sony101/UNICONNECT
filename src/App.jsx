@@ -13,6 +13,9 @@ import BottomNav from "./components/layout/BottomNav";
 import Avatar from "./components/layout/Avatar";
 import { AnimatePresence, motion } from "framer-motion";
 import API from "./utils/api";
+import VerifyEmail from "./pages/VerifyEmail";
+
+const [pendingEmail, setPendingEmail] = useState("");
 
 const TAB_TITLES = {
   feed: "UniConnect",
@@ -148,13 +151,29 @@ function MainApp() {
 
   // Auth page
   if (screen === "auth") {
-    return (
-      <Auth
-        initialMode={authMode}
-        onComplete={() => setScreen("app")}
-      />
-    );
-  }
+  return (
+    <Auth
+      initialMode={authMode}
+      onComplete={(result) => {
+        if (result.requiresVerification) {
+          setPendingEmail(result.email);
+          setScreen("verify");
+        } else {
+          setScreen("app");
+        }
+      }}
+    />
+  );
+}
+
+if (screen === "verify") {
+  return (
+    <VerifyEmail
+      email={pendingEmail}
+      onComplete={() => setScreen("app")}
+    />
+  );
+}
 
   // Main app
   return (
