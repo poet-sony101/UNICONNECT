@@ -15,7 +15,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import API from "./utils/api";
 import VerifyEmail from "./pages/VerifyEmail";
 
-const [pendingEmail, setPendingEmail] = useState("");
 
 const TAB_TITLES = {
   feed: "UniConnect",
@@ -122,6 +121,7 @@ function MainApp() {
     localStorage.getItem("token") ? "app" : "landing"
   );
   const [authMode, setAuthMode] = useState("signup");
+  const [pendingEmail, setPendingEmail] = useState("");
   const [tab, setTab] = useState("feed");
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifCount, setNotifCount] = useState(0);
