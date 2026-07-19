@@ -6,6 +6,10 @@ import StudyGroups from "./StudyGroups";
 import PastQuestions from "./PastQuestions";
 import LectureNotes from "./LectureNotes";
 import Timetable from "./Timetable";
+import Jobs from "./Jobs";
+import Marketplace from "./Marketplace";
+import Skills from "./Skills";
+import Leaderboard from "./Leaderboard";
 
 const TABS = [
   { id: "events", icon: "📅", label: "Events" },
@@ -15,6 +19,10 @@ const TABS = [
   { id: "pastq", icon: "📚", label: "Past Q" },
   { id: "notes", icon: "📝", label: "Notes" },
   { id: "timetable", icon: "🗓️", label: "Timetable" },
+  { id: "jobs", icon: "💼", label: "Jobs" },
+  { id: "marketplace", icon: "🛒", label: "Market" },
+  { id: "skills", icon: "🔄", label: "Skills" },
+  { id: "leaderboard", icon: "🏆", label: "Top" },
 ];
 
 export default function Explore() {
@@ -59,6 +67,10 @@ export default function Explore() {
       {activeTab === "pastq" && <PastQuestions />}
       {activeTab === "notes" && <LectureNotes />}
       {activeTab === "timetable" && <Timetable />}
+      {activeTab === "jobs" && <Jobs />}
+      {activeTab === "marketplace" && <Marketplace />}
+      {activeTab === "skills" && <Skills />}
+      {activeTab === "leaderboard" && <Leaderboard />}
     </div>
   );
 }
