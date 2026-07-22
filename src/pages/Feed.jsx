@@ -5,6 +5,7 @@ import { useUser } from "../context/UserContext";
 import { motion, AnimatePresence } from "framer-motion";
 import useFeed from "../hooks/useFeed";
 import API from "../utils/api";
+import Stories from "./Stories";
 
 const styles = `
   @keyframes bounceHeart {
@@ -277,6 +278,7 @@ export default function Feed() {
           <span className="text-xs bg-white/10 text-white/80 px-2 py-1 rounded-full font-medium">✓ Verified</span>
         </div>
       </div>
+      <Stories />
 
       {/* Tag filter */}
       <div className="flex gap-2 overflow-x-auto pb-2 mb-4">

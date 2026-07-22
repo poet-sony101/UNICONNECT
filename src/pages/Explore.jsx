@@ -10,6 +10,9 @@ import Jobs from "./Jobs";
 import Marketplace from "./Marketplace";
 import Skills from "./Skills";
 import Leaderboard from "./Leaderboard";
+import Alumni from "./Alumni";
+import GradeTracker from "./GradeTracker";
+import Emergency from "./Emergency";
 
 const TABS = [
   { id: "events", icon: "📅", label: "Events" },
@@ -23,6 +26,9 @@ const TABS = [
   { id: "marketplace", icon: "🛒", label: "Market" },
   { id: "skills", icon: "🔄", label: "Skills" },
   { id: "leaderboard", icon: "🏆", label: "Top" },
+  { id: "alumni", icon: "🎓", label: "Alumni" },
+  { id: "grades", icon: "📊", label: "Grades" },
+  { id: "emergency", icon: "🆘", label: "SOS" },
 ];
 
 export default function Explore() {
@@ -71,6 +77,9 @@ export default function Explore() {
       {activeTab === "marketplace" && <Marketplace />}
       {activeTab === "skills" && <Skills />}
       {activeTab === "leaderboard" && <Leaderboard />}
+      {activeTab === "alumni" && <Alumni />}
+      {activeTab === "grades" && <GradeTracker />}
+      {activeTab === "emergency" && <Emergency />}
     </div>
   );
 }

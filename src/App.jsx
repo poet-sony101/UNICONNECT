@@ -14,7 +14,7 @@ import Avatar from "./components/layout/Avatar";
 import { AnimatePresence, motion } from "framer-motion";
 import API from "./utils/api";
 import VerifyEmail from "./pages/VerifyEmail";
-
+import Stories from "./Stories";
 
 const TAB_TITLES = {
   feed: "UniConnect",
