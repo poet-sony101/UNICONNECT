@@ -27,7 +27,7 @@ const TABS = [
   { id: "skills", icon: "🔄", label: "Skills" },
   { id: "leaderboard", icon: "🏆", label: "Top" },
   { id: "alumni", icon: "🎓", label: "Alumni" },
-  { id: "grades", icon: "📊", label: "Grades" },
+  { id: "grades", icon: "📈", label: "Grades" },
   { id: "emergency", icon: "🆘", label: "SOS" },
 ];
 
@@ -35,13 +35,19 @@ export default function Explore() {
   const [activeTab, setActiveTab] = useState("events");
 
   return (
-    <div className="pb-28">
+    <div style={{ paddingBottom: 112 }}>
       {/* Tab bar */}
       <div
-        className="border-b sticky top-[64px] z-10 overflow-x-auto"
-        style={{ borderColor: "var(--border)", backgroundColor: "var(--card)" }}
+        style={{
+          borderBottom: "1px solid var(--border)",
+          position: "sticky",
+          top: 64,
+          zIndex: 10,
+          overflowX: "auto",
+          backgroundColor: "var(--card)",
+        }}
       >
-        <div className="flex min-w-max">
+        <div style={{ display: "flex", minWidth: "max-content" }}>
           {TABS.map((t) => (
             <button
               key={t.id}
@@ -66,20 +72,22 @@ export default function Explore() {
       </div>
 
       {/* Content */}
-      {activeTab === "events" && <Events />}
-      {activeTab === "confessions" && <Confessions />}
-      {activeTab === "polls" && <Polls />}
-      {activeTab === "study" && <StudyGroups />}
-      {activeTab === "pastq" && <PastQuestions />}
-      {activeTab === "notes" && <LectureNotes />}
-      {activeTab === "timetable" && <Timetable />}
-      {activeTab === "jobs" && <Jobs />}
-      {activeTab === "marketplace" && <Marketplace />}
-      {activeTab === "skills" && <Skills />}
-      {activeTab === "leaderboard" && <Leaderboard />}
-      {activeTab === "alumni" && <Alumni />}
-      {activeTab === "grades" && <GradeTracker />}
-      {activeTab === "emergency" && <Emergency />}
+      <div>
+        {activeTab === "events" && <Events />}
+        {activeTab === "confessions" && <Confessions />}
+        {activeTab === "polls" && <Polls />}
+        {activeTab === "study" && <StudyGroups />}
+        {activeTab === "pastq" && <PastQuestions />}
+        {activeTab === "notes" && <LectureNotes />}
+        {activeTab === "timetable" && <Timetable />}
+        {activeTab === "jobs" && <Jobs />}
+        {activeTab === "marketplace" && <Marketplace />}
+        {activeTab === "skills" && <Skills />}
+        {activeTab === "leaderboard" && <Leaderboard />}
+        {activeTab === "alumni" && <Alumni />}
+        {activeTab === "grades" && <GradeTracker />}
+        {activeTab === "emergency" && <Emergency />}
+      </div>
     </div>
   );
 }

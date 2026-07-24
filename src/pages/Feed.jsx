@@ -75,9 +75,7 @@ function CommentsSheet({ post, onClose, fetchComments, addComment }) {
       <motion.div
         className="sheet"
         style={{ backgroundColor: "var(--card)" }}
-        initial={{ y: 300 }}
-        animate={{ y: 0 }}
-        exit={{ y: 300 }}
+        initial={{ y: 300 }} animate={{ y: 0 }} exit={{ y: 300 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -138,9 +136,7 @@ function ShareSheet({ post, onClose }) {
       <motion.div
         className="sheet"
         style={{ backgroundColor: "var(--card)" }}
-        initial={{ y: 300 }}
-        animate={{ y: 0 }}
-        exit={{ y: 300 }}
+        initial={{ y: 300 }} animate={{ y: 0 }} exit={{ y: 300 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -185,9 +181,7 @@ function CreatePostSheet({ onClose, onPost }) {
       <motion.div
         className="sheet"
         style={{ backgroundColor: "var(--card)" }}
-        initial={{ y: 300 }}
-        animate={{ y: 0 }}
-        exit={{ y: 300 }}
+        initial={{ y: 300 }} animate={{ y: 0 }} exit={{ y: 300 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -264,6 +258,9 @@ export default function Feed() {
     <div className="px-4 pt-4 pb-28">
       <style>{styles}</style>
 
+      {/* Stories */}
+      <Stories />
+
       {/* Department badge */}
       <div
         className="rounded-2xl px-4 py-3.5 flex items-center gap-3 mb-4 shadow-sm"
@@ -278,7 +275,6 @@ export default function Feed() {
           <span className="text-xs bg-white/10 text-white/80 px-2 py-1 rounded-full font-medium">✓ Verified</span>
         </div>
       </div>
-      <Stories />
 
       {/* Tag filter */}
       <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
@@ -366,8 +362,7 @@ export default function Feed() {
                       style={{
                         color: post.deleting ? "#9ca3af" : "#ef4444",
                         backgroundColor: post.deleting ? "#f3f4f6" : "#fef2f2",
-                        border: "none",
-                        cursor: post.deleting ? "not-allowed" : "pointer",
+                        border: "none", cursor: post.deleting ? "not-allowed" : "pointer",
                       }}
                     >
                       {post.deleting ? "⏳" : "🗑"}
