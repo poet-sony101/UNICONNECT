@@ -262,6 +262,7 @@ export default function Feed() {
 
       {/* Stories */}
       <Stories />
+      <Announcements />
 
       {/* Department badge */}
       <div
@@ -356,6 +357,7 @@ export default function Feed() {
                 </div>
                 <div className="flex items-center gap-2">
                   {post.tag && <Tag label={post.tag} />}
+                  <PostMenu post={post} onBlocked={refresh} />
                   {post.author_id === user.id && (
                     <button
                       onClick={() => deletePost(post.id)}
