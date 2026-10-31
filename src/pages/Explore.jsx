@@ -11,6 +11,8 @@ import Marketplace from "./Marketplace";
 import Skills from "./Skills";
 import Leaderboard from "./Leaderboard";
 import Alumni from "./Alumni";
+import MentorshipInbox from "./MentorshipInbox";
+import Lecturer from "./Lecturer";
 import GradeTracker from "./GradeTracker";
 import Emergency from "./Emergency";
 
@@ -27,16 +29,37 @@ const TABS = [
   { id: "skills", icon: "🔄", label: "Skills" },
   { id: "leaderboard", icon: "🏆", label: "Top" },
   { id: "alumni", icon: "🎓", label: "Alumni" },
+  { id: "mentor", icon: "🤝", label: "Mentor" },
+  { id: "lecturer", icon: "👨‍🏫", label: "Lecturers" },
   { id: "grades", icon: "📈", label: "Grades" },
   { id: "emergency", icon: "🆘", label: "SOS" },
 ];
 
+const PAGES = {
+  events: Events,
+  confessions: Confessions,
+  polls: Polls,
+  study: StudyGroups,
+  pastq: PastQuestions,
+  notes: LectureNotes,
+  timetable: Timetable,
+  jobs: Jobs,
+  marketplace: Marketplace,
+  skills: Skills,
+  leaderboard: Leaderboard,
+  alumni: Alumni,
+  mentor: MentorshipInbox,
+  lecturer: Lecturer,
+  grades: GradeTracker,
+  emergency: Emergency,
+};
+
 export default function Explore() {
   const [activeTab, setActiveTab] = useState("events");
+  const ActivePage = PAGES[activeTab];
 
   return (
     <div style={{ paddingBottom: 112 }}>
-      {/* Tab bar */}
       <div
         style={{
           borderBottom: "1px solid var(--border)",
@@ -71,23 +94,7 @@ export default function Explore() {
         </div>
       </div>
 
-      {/* Content */}
-      <div>
-        {activeTab === "events" && <Events />}
-        {activeTab === "confessions" && <Confessions />}
-        {activeTab === "polls" && <Polls />}
-        {activeTab === "study" && <StudyGroups />}
-        {activeTab === "pastq" && <PastQuestions />}
-        {activeTab === "notes" && <LectureNotes />}
-        {activeTab === "timetable" && <Timetable />}
-        {activeTab === "jobs" && <Jobs />}
-        {activeTab === "marketplace" && <Marketplace />}
-        {activeTab === "skills" && <Skills />}
-        {activeTab === "leaderboard" && <Leaderboard />}
-        {activeTab === "alumni" && <Alumni />}
-        {activeTab === "grades" && <GradeTracker />}
-        {activeTab === "emergency" && <Emergency />}
-      </div>
+      <ActivePage />
     </div>
   );
 }

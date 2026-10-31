@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import useFeed from "../hooks/useFeed";
 import API from "../utils/api";
 import Stories from "./Stories";
+import Announcements from "./Announcements";
+import PostMenu from "../components/PostMenu";
 
 const styles = `
   @keyframes bounceHeart {
